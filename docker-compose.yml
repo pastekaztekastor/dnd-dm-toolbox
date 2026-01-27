@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database for campaign data
+  postgres:
+    image: postgres:15-alpine
+    container_name: dnd-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dnduser
+      POSTGRES_PASSWORD: dndpass
+      POSTGRES_DB: dnd_toolbox
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - dnd-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dnduser"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: dnd-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@dnd.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    networks:
+      - dnd-network
+    depends_on:
+      - postgres
+
+  # Development environment
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: dnd-dev
+    volumes:
+      - .:/workspace
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    environment:
+      - DISPLAY=${DISPLAY}
+      - DATABASE_URL=postgresql://dnduser:dndpass@postgres:5432/dnd_toolbox
+    networks:
+      - dnd-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    stdin_open: true
+    tty: true
+    privileged: true
+
+  # Production application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dnd-app
+    volumes:
+      - ./data:/app/data
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    environment:
+      - DISPLAY=${DISPLAY}
+      - DATABASE_URL=postgresql://dnduser:dndpass@postgres:5432/dnd_toolbox
+    networks:
+      - dnd-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - production
+
+networks:
+  dnd-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  pgadmin_data:
