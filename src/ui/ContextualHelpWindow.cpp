@@ -305,9 +305,13 @@ void ContextualHelpWindow::ClearHelp() {
 void ContextualHelpWindow::Render() {
     if (!isOpen) return;
 
-    ImGui::SetNextWindowSize(ImVec2(400, 500), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(450, 550), ImGuiCond_FirstUseEver);
     if (ImGui::Begin("💡 Aide Contextuelle", &isOpen)) {
+        // Get content width for proper text wrapping
+        float wrapWidth = ImGui::GetContentRegionAvail().x;
+
         if (!hasContent) {
+            ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + wrapWidth);
             ImGui::TextWrapped("📖 Survolez ou cliquez sur les éléments avec le symbole (?) pour obtenir de l'aide.");
             ImGui::Spacing();
             ImGui::Separator();
@@ -319,7 +323,10 @@ void ContextualHelpWindow::Render() {
             ImGui::Spacing();
             ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.0f, 1.0f), "⚠️ Avertissement");
             ImGui::TextWrapped("Les avertissements vous évitent les erreurs courantes de débutants.");
+            ImGui::PopTextWrapPos();
         } else {
+            ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + wrapWidth);
+
             // Title
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.7f, 1.0f, 1.0f));
             ImGui::TextWrapped("%s", currentHelp.title.c_str());
@@ -335,7 +342,9 @@ void ContextualHelpWindow::Render() {
             if (!currentHelp.advice.empty()) {
                 ImGui::Separator();
                 ImGui::Spacing();
-                ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "%s", currentHelp.advice.c_str());
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));
+                ImGui::TextWrapped("%s", currentHelp.advice.c_str());
+                ImGui::PopStyleColor();
                 ImGui::Spacing();
             }
 
@@ -343,9 +352,13 @@ void ContextualHelpWindow::Render() {
             if (!currentHelp.warnings.empty()) {
                 ImGui::Separator();
                 ImGui::Spacing();
-                ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.0f, 1.0f), "%s", currentHelp.warnings.c_str());
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.6f, 0.0f, 1.0f));
+                ImGui::TextWrapped("%s", currentHelp.warnings.c_str());
+                ImGui::PopStyleColor();
                 ImGui::Spacing();
             }
+
+            ImGui::PopTextWrapPos();
         }
     }
     ImGui::End();

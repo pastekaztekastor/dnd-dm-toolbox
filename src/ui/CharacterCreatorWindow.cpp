@@ -9,7 +9,7 @@ namespace UI {
 void CharacterCreatorWindow::Render() {
     if (!isOpen) return;
 
-    ImGui::SetNextWindowSize(ImVec2(900, 650), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(1000, 700), ImGuiCond_FirstUseEver);
     if (ImGui::Begin("Créateur de Personnage", &isOpen)) {
         // Step indicator
         const char* steps[] = {"Infos de Base", "Race & Classe", "Caractéristiques", "Compétences", "Récapitulatif"};
@@ -270,8 +270,9 @@ void CharacterCreatorWindow::RenderAbilities() {
         if (helpWindow && ImGui::IsItemHovered()) {
             helpWindow->SetHelp(helpKey);
         }
-        ImGui::SameLine(120);
+        ImGui::SameLine(140);
 
+        ImGui::SetNextItemWidth(200);
         if (abilityMethod == AbilityMethod::PointBuy) {
             if (ImGui::SliderInt(("##" + std::string(label)).c_str(), &score, 8, 15)) {
                 character->abilityScores.Set(ability, score);
@@ -283,7 +284,7 @@ void CharacterCreatorWindow::RenderAbilities() {
         }
 
         ImGui::SameLine();
-        ImGui::Text("Modificateur : %+d", modifier);
+        ImGui::Text("Mod: %+d", modifier);
     };
 
     renderAbility("Force", DnD::Ability::Strength, "ability_strength");
@@ -414,10 +415,15 @@ void CharacterCreatorWindow::RenderSkills() {
             }
         }
 
-        // Show calculated bonus
+        // Show calculated bonus - use flexible positioning
+        ImGui::SameLine();
+        float cursorX = ImGui::GetCursorPosX();
+        float availWidth = ImGui::GetContentRegionAvail().x;
+        if (availWidth > 50) {
+            ImGui::SetCursorPosX(cursorX + availWidth - 50);
+        }
         int bonus = character->GetSkillModifier(skill);
-        ImGui::SameLine(400);
-        ImGui::Text("%+d", bonus);
+        ImGui::Text("Bonus: %+d", bonus);
     }
 }
 
