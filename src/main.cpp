@@ -5,6 +5,7 @@
 #include <cstdio>
 #include "../include/ui/CharacterCreatorWindow.h"
 #include "../include/ui/DiceRollerWindow.h"
+#include "../include/ui/ContextualHelpWindow.h"
 
 static void glfw_error_callback(int error, const char* description)
 {
@@ -58,7 +59,10 @@ int main(int argc, char** argv)
     // Application state
     UI::CharacterCreatorWindow characterCreator;
     UI::DiceRollerWindow diceRoller;
+    UI::ContextualHelpWindow helpWindow;
     characterCreator.SetDiceRoller(&diceRoller); // Connect dice roller
+    characterCreator.SetHelpWindow(&helpWindow); // Connect help window
+    bool show_help = true; // Start with help window open
     bool show_combat_tracker = false;
     bool show_dungeon_generator = false;
     ImVec4 clear_color = ImVec4(0.1f, 0.1f, 0.12f, 1.00f);
@@ -121,6 +125,14 @@ int main(int argc, char** argv)
 
             if (ImGui::BeginMenu("Aide"))
             {
+                if (ImGui::MenuItem("💡 Aide Contextuelle", nullptr, &show_help)) {
+                    if (show_help) {
+                        helpWindow.Show();
+                    } else {
+                        helpWindow.Hide();
+                    }
+                }
+                ImGui::Separator();
                 if (ImGui::MenuItem("À propos"))
                 {
                     // TODO: Show about dialog
@@ -163,6 +175,9 @@ int main(int argc, char** argv)
 
         // Character Creator Window
         characterCreator.Render();
+
+        // Contextual Help Window
+        helpWindow.Render();
 
         // Combat Tracker Window
         if (show_combat_tracker)

@@ -1,5 +1,6 @@
 #include "../../include/ui/CharacterCreatorWindow.h"
 #include "../../include/ui/DiceRollerWindow.h"
+#include "../../include/ui/ContextualHelpWindow.h"
 #include <imgui.h>
 #include <algorithm>
 
@@ -84,11 +85,30 @@ void CharacterCreatorWindow::RenderRaceClass() {
 
     // Race selection
     ImGui::Text("Race :");
+    if (helpWindow) {
+        ContextualHelpWindow::ShowTooltip("Votre race détermine vos bonus de caractéristiques, votre vitesse, et vos capacités spéciales.");
+    }
+
     auto races = DnD::CharacterHelper::GetAllRaces();
+    static const std::map<DnD::Race, std::string> raceHelpKeys = {
+        {DnD::Race::Human, "race_human"},
+        {DnD::Race::Elf, "race_elf"},
+        {DnD::Race::Dwarf, "race_dwarf"},
+        {DnD::Race::Halfling, "race_halfling"},
+        {DnD::Race::Dragonborn, "race_dragonborn"},
+        {DnD::Race::Gnome, "race_gnome"},
+        {DnD::Race::HalfElf, "race_halfelf"},
+        {DnD::Race::HalfOrc, "race_halforc"},
+        {DnD::Race::Tiefling, "race_tiefling"}
+    };
+
     for (size_t i = 0; i < races.size(); ++i) {
         if (ImGui::RadioButton(DnD::CharacterHelper::RaceToString(races[i]).c_str(), &selectedRace, i)) {
             character->race = races[i];
             character->speed = DnD::CharacterHelper::GetRacialSpeed(races[i]);
+        }
+        if (helpWindow && ImGui::IsItemHovered()) {
+            helpWindow->SetHelp(raceHelpKeys.at(races[i]));
         }
         if (i % 3 != 2) ImGui::SameLine();
     }
@@ -99,7 +119,26 @@ void CharacterCreatorWindow::RenderRaceClass() {
 
     // Class selection
     ImGui::Text("Classe :");
+    if (helpWindow) {
+        ContextualHelpWindow::ShowTooltip("Votre classe détermine vos capacités, vos points de vie, et votre style de jeu.");
+    }
+
     auto classes = DnD::CharacterHelper::GetAllClasses();
+    static const std::map<DnD::CharacterClass, std::string> classHelpKeys = {
+        {DnD::CharacterClass::Barbarian, "class_barbarian"},
+        {DnD::CharacterClass::Bard, "class_bard"},
+        {DnD::CharacterClass::Cleric, "class_cleric"},
+        {DnD::CharacterClass::Druid, "class_druid"},
+        {DnD::CharacterClass::Fighter, "class_fighter"},
+        {DnD::CharacterClass::Monk, "class_monk"},
+        {DnD::CharacterClass::Paladin, "class_paladin"},
+        {DnD::CharacterClass::Ranger, "class_ranger"},
+        {DnD::CharacterClass::Rogue, "class_rogue"},
+        {DnD::CharacterClass::Sorcerer, "class_sorcerer"},
+        {DnD::CharacterClass::Warlock, "class_warlock"},
+        {DnD::CharacterClass::Wizard, "class_wizard"}
+    };
+
     for (size_t i = 0; i < classes.size(); ++i) {
         if (ImGui::RadioButton(DnD::CharacterHelper::ClassToString(classes[i]).c_str(), &selectedClass, i)) {
             character->characterClass = classes[i];
@@ -126,6 +165,9 @@ void CharacterCreatorWindow::RenderRaceClass() {
                 default:
                     break;
             }
+        }
+        if (helpWindow && ImGui::IsItemHovered()) {
+            helpWindow->SetHelp(classHelpKeys.at(classes[i]));
         }
         if (i % 3 != 2) ImGui::SameLine();
     }
@@ -157,6 +199,10 @@ void CharacterCreatorWindow::RenderAbilities() {
     if (ImGui::RadioButton("Achat de Points (27 points)", (int*)&abilityMethod, 0)) {
         abilityMethod = AbilityMethod::PointBuy;
     }
+    if (helpWindow && ImGui::IsItemHovered()) {
+        helpWindow->SetHelp("method_pointbuy");
+    }
+
     ImGui::SameLine();
     if (ImGui::RadioButton("Tableau Standard", (int*)&abilityMethod, 1)) {
         abilityMethod = AbilityMethod::StandardArray;
@@ -168,9 +214,16 @@ void CharacterCreatorWindow::RenderAbilities() {
         character->abilityScores.wisdom = 10;
         character->abilityScores.charisma = 8;
     }
+    if (helpWindow && ImGui::IsItemHovered()) {
+        helpWindow->SetHelp("method_standard");
+    }
+
     ImGui::SameLine();
     if (ImGui::RadioButton("Lancer de Dés (4d6 sans le plus bas)", (int*)&abilityMethod, 2)) {
         abilityMethod = AbilityMethod::Roll;
+    }
+    if (helpWindow && ImGui::IsItemHovered()) {
+        helpWindow->SetHelp("method_roll");
     }
 
     // Button to roll ability scores
@@ -209,11 +262,14 @@ void CharacterCreatorWindow::RenderAbilities() {
     }
 
     // Ability score sliders/editors
-    auto renderAbility = [this](const char* label, DnD::Ability ability) {
+    auto renderAbility = [this](const char* label, DnD::Ability ability, const std::string& helpKey) {
         int score = character->abilityScores.Get(ability);
         int modifier = character->abilityScores.GetModifier(ability);
 
         ImGui::Text("%s:", label);
+        if (helpWindow && ImGui::IsItemHovered()) {
+            helpWindow->SetHelp(helpKey);
+        }
         ImGui::SameLine(120);
 
         if (abilityMethod == AbilityMethod::PointBuy) {
@@ -230,12 +286,12 @@ void CharacterCreatorWindow::RenderAbilities() {
         ImGui::Text("Modificateur : %+d", modifier);
     };
 
-    renderAbility("Force", DnD::Ability::Strength);
-    renderAbility("Dextérité", DnD::Ability::Dexterity);
-    renderAbility("Constitution", DnD::Ability::Constitution);
-    renderAbility("Intelligence", DnD::Ability::Intelligence);
-    renderAbility("Sagesse", DnD::Ability::Wisdom);
-    renderAbility("Charisme", DnD::Ability::Charisma);
+    renderAbility("Force", DnD::Ability::Strength, "ability_strength");
+    renderAbility("Dextérité", DnD::Ability::Dexterity, "ability_dexterity");
+    renderAbility("Constitution", DnD::Ability::Constitution, "ability_constitution");
+    renderAbility("Intelligence", DnD::Ability::Intelligence, "ability_intelligence");
+    renderAbility("Sagesse", DnD::Ability::Wisdom, "ability_wisdom");
+    renderAbility("Charisme", DnD::Ability::Charisma, "ability_charisma");
 
     if (!rolledScores.empty() && abilityMethod == AbilityMethod::Roll) {
         ImGui::Spacing();
@@ -249,6 +305,9 @@ void CharacterCreatorWindow::RenderAbilities() {
 
 void CharacterCreatorWindow::RenderSkills() {
     ImGui::Text("Maîtrises de Compétences");
+    if (helpWindow) {
+        ContextualHelpWindow::ShowTooltip("Les compétences représentent ce en quoi votre personnage excelle.");
+    }
     ImGui::Spacing();
 
     // Get available skills for the current class
@@ -265,6 +324,9 @@ void CharacterCreatorWindow::RenderSkills() {
 
     // Display skill counter
     ImGui::TextWrapped("Sélectionnez vos maîtrises de compétences.");
+    if (helpWindow && ImGui::IsItemHovered()) {
+        helpWindow->SetHelp("skill_general");
+    }
     ImGui::Spacing();
     if (selectedCount > maxSkills) {
         ImGui::TextColored(ImVec4(1, 0, 0, 1), "Compétences : %d / %d (Trop de compétences !)", selectedCount, maxSkills);
@@ -274,6 +336,19 @@ void CharacterCreatorWindow::RenderSkills() {
         ImGui::Text("Compétences : %d / %d", selectedCount, maxSkills);
     }
     ImGui::Spacing();
+
+    // Skill help keys mapping
+    static const std::map<DnD::Skill, std::string> skillHelpKeys = {
+        {DnD::Skill::Perception, "skill_perception"},
+        {DnD::Skill::Stealth, "skill_stealth"},
+        {DnD::Skill::Athletics, "skill_athletics"},
+        {DnD::Skill::Acrobatics, "skill_acrobatics"},
+        {DnD::Skill::Investigation, "skill_investigation"},
+        {DnD::Skill::Insight, "skill_insight"},
+        {DnD::Skill::Persuasion, "skill_persuasion"},
+        {DnD::Skill::Deception, "skill_deception"},
+        {DnD::Skill::Intimidation, "skill_intimidation"}
+    };
 
     // Render all skills
     auto skills = DnD::SkillHelper::GetAllSkills();
@@ -302,6 +377,11 @@ void CharacterCreatorWindow::RenderSkills() {
             } else {
                 character->skillProficiencies[skill] = DnD::ProficiencyLevel::None;
             }
+        }
+
+        // Show help for important skills
+        if (helpWindow && ImGui::IsItemHovered() && skillHelpKeys.count(skill) > 0) {
+            helpWindow->SetHelp(skillHelpKeys.at(skill));
         }
 
         if (disabled) {
