@@ -7,11 +7,11 @@ namespace UI {
 void CharacterCreatorWindow::Render() {
     if (!isOpen) return;
 
-    ImGui::SetNextWindowSize(ImVec2(800, 600), ImGuiCond_FirstUseEver);
-    if (ImGui::Begin("Character Creator", &isOpen)) {
+    ImGui::SetNextWindowSize(ImVec2(900, 650), ImGuiCond_FirstUseEver);
+    if (ImGui::Begin("Créateur de Personnage", &isOpen)) {
         // Step indicator
-        const char* steps[] = {"Basic Info", "Race & Class", "Abilities", "Skills", "Review"};
-        ImGui::Text("Step %d of 5: %s", creationStep + 1, steps[creationStep]);
+        const char* steps[] = {"Infos de Base", "Race & Classe", "Caractéristiques", "Compétences", "Récapitulatif"};
+        ImGui::Text("Étape %d sur 5 : %s", creationStep + 1, steps[creationStep]);
         ImGui::Separator();
 
         // Render current step
@@ -27,25 +27,25 @@ void CharacterCreatorWindow::Render() {
 
         // Navigation buttons
         if (creationStep > 0) {
-            if (ImGui::Button("< Previous")) {
+            if (ImGui::Button("< Précédent")) {
                 creationStep--;
             }
             ImGui::SameLine();
         }
 
         if (creationStep < 4) {
-            if (ImGui::Button("Next >")) {
+            if (ImGui::Button("Suivant >")) {
                 creationStep++;
             }
         } else {
-            if (ImGui::Button("Finish & Create Character")) {
+            if (ImGui::Button("Terminer & Créer le Personnage")) {
                 // TODO: Save character
                 Hide();
             }
         }
 
         ImGui::SameLine();
-        if (ImGui::Button("Cancel")) {
+        if (ImGui::Button("Annuler")) {
             Hide();
         }
     }
@@ -53,36 +53,36 @@ void CharacterCreatorWindow::Render() {
 }
 
 void CharacterCreatorWindow::RenderBasicInfo() {
-    ImGui::Text("Character Basic Information");
+    ImGui::Text("Informations de Base du Personnage");
     ImGui::Spacing();
 
-    ImGui::InputText("Name", nameBuffer, sizeof(nameBuffer));
+    ImGui::InputText("Nom", nameBuffer, sizeof(nameBuffer));
     if (strlen(nameBuffer) > 0) {
         character->name = nameBuffer;
     }
 
-    ImGui::InputText("Background", backgroundBuffer, sizeof(backgroundBuffer));
+    ImGui::InputText("Historique", backgroundBuffer, sizeof(backgroundBuffer));
     if (strlen(backgroundBuffer) > 0) {
         character->background = backgroundBuffer;
     }
 
     ImGui::Spacing();
-    ImGui::Text("Starting Level");
+    ImGui::Text("Niveau de Départ");
     int level = character->level;
     if (ImGui::SliderInt("##Level", &level, 1, 20)) {
         character->level = level;
     }
 
     ImGui::Spacing();
-    ImGui::Checkbox("Is NPC?", &character->isNPC);
+    ImGui::Checkbox("Est un PNJ ?", &character->isNPC);
 }
 
 void CharacterCreatorWindow::RenderRaceClass() {
-    ImGui::Text("Select Race and Class");
+    ImGui::Text("Sélection de Race et Classe");
     ImGui::Spacing();
 
     // Race selection
-    ImGui::Text("Race:");
+    ImGui::Text("Race :");
     auto races = DnD::CharacterHelper::GetAllRaces();
     for (size_t i = 0; i < races.size(); ++i) {
         if (ImGui::RadioButton(DnD::CharacterHelper::RaceToString(races[i]).c_str(), &selectedRace, i)) {
@@ -97,7 +97,7 @@ void CharacterCreatorWindow::RenderRaceClass() {
     ImGui::Spacing();
 
     // Class selection
-    ImGui::Text("Class:");
+    ImGui::Text("Classe :");
     auto classes = DnD::CharacterHelper::GetAllClasses();
     for (size_t i = 0; i < classes.size(); ++i) {
         if (ImGui::RadioButton(DnD::CharacterHelper::ClassToString(classes[i]).c_str(), &selectedClass, i)) {
@@ -134,11 +134,11 @@ void CharacterCreatorWindow::RenderRaceClass() {
     ImGui::Spacing();
 
     // Alignment
-    ImGui::Text("Alignment:");
+    ImGui::Text("Alignement :");
     const char* alignments[] = {
-        "Lawful Good", "Neutral Good", "Chaotic Good",
-        "Lawful Neutral", "True Neutral", "Chaotic Neutral",
-        "Lawful Evil", "Neutral Evil", "Chaotic Evil"
+        "Loyal Bon", "Neutre Bon", "Chaotique Bon",
+        "Loyal Neutre", "Neutre Strict", "Chaotique Neutre",
+        "Loyal Mauvais", "Neutre Mauvais", "Chaotique Mauvais"
     };
     for (int i = 0; i < 9; ++i) {
         if (ImGui::RadioButton(alignments[i], &selectedAlignment, i)) {
@@ -149,15 +149,15 @@ void CharacterCreatorWindow::RenderRaceClass() {
 }
 
 void CharacterCreatorWindow::RenderAbilities() {
-    ImGui::Text("Ability Scores");
+    ImGui::Text("Valeurs de Caractéristiques");
     ImGui::Spacing();
 
     // Method selection
-    if (ImGui::RadioButton("Point Buy (27 points)", (int*)&abilityMethod, 0)) {
+    if (ImGui::RadioButton("Achat de Points (27 points)", (int*)&abilityMethod, 0)) {
         abilityMethod = AbilityMethod::PointBuy;
     }
     ImGui::SameLine();
-    if (ImGui::RadioButton("Standard Array", (int*)&abilityMethod, 1)) {
+    if (ImGui::RadioButton("Tableau Standard", (int*)&abilityMethod, 1)) {
         abilityMethod = AbilityMethod::StandardArray;
         // Set standard array: 15, 14, 13, 12, 10, 8
         character->abilityScores.strength = 15;
@@ -168,9 +168,9 @@ void CharacterCreatorWindow::RenderAbilities() {
         character->abilityScores.charisma = 8;
     }
     ImGui::SameLine();
-    if (ImGui::RadioButton("Roll (4d6 drop lowest)", (int*)&abilityMethod, 2)) {
+    if (ImGui::RadioButton("Lancer de Dés (4d6 sans le plus bas)", (int*)&abilityMethod, 2)) {
         abilityMethod = AbilityMethod::Roll;
-        if (ImGui::Button("Roll Scores")) {
+        if (ImGui::Button("Lancer les Dés")) {
             rolledScores = DnD::Dice::RollAbilityScoreSet();
         }
     }
@@ -181,9 +181,9 @@ void CharacterCreatorWindow::RenderAbilities() {
 
     if (abilityMethod == AbilityMethod::PointBuy) {
         int pointsUsed = CalculatePointBuyTotal();
-        ImGui::Text("Points Used: %d / 27", pointsUsed);
+        ImGui::Text("Points Utilisés : %d / 27", pointsUsed);
         if (pointsUsed > 27) {
-            ImGui::TextColored(ImVec4(1, 0, 0, 1), "You have exceeded your point budget!");
+            ImGui::TextColored(ImVec4(1, 0, 0, 1), "Vous avez dépassé votre budget de points !");
         }
         ImGui::Spacing();
     }
@@ -207,19 +207,19 @@ void CharacterCreatorWindow::RenderAbilities() {
         }
 
         ImGui::SameLine();
-        ImGui::Text("Modifier: %+d", modifier);
+        ImGui::Text("Modificateur : %+d", modifier);
     };
 
-    renderAbility("Strength", DnD::Ability::Strength);
-    renderAbility("Dexterity", DnD::Ability::Dexterity);
+    renderAbility("Force", DnD::Ability::Strength);
+    renderAbility("Dextérité", DnD::Ability::Dexterity);
     renderAbility("Constitution", DnD::Ability::Constitution);
     renderAbility("Intelligence", DnD::Ability::Intelligence);
-    renderAbility("Wisdom", DnD::Ability::Wisdom);
-    renderAbility("Charisma", DnD::Ability::Charisma);
+    renderAbility("Sagesse", DnD::Ability::Wisdom);
+    renderAbility("Charisme", DnD::Ability::Charisma);
 
     if (!rolledScores.empty() && abilityMethod == AbilityMethod::Roll) {
         ImGui::Spacing();
-        ImGui::Text("Rolled scores:");
+        ImGui::Text("Résultats des dés :");
         for (int score : rolledScores) {
             ImGui::SameLine();
             ImGui::Text("%d", score);
@@ -228,10 +228,10 @@ void CharacterCreatorWindow::RenderAbilities() {
 }
 
 void CharacterCreatorWindow::RenderSkills() {
-    ImGui::Text("Skill Proficiencies");
+    ImGui::Text("Maîtrises de Compétences");
     ImGui::Spacing();
 
-    ImGui::TextWrapped("Select your skill proficiencies. The number of skills you can choose depends on your class and background.");
+    ImGui::TextWrapped("Sélectionnez vos maîtrises de compétences. Le nombre de compétences que vous pouvez choisir dépend de votre classe et de votre historique.");
     ImGui::Spacing();
 
     // Render all skills

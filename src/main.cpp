@@ -24,7 +24,7 @@ int main(int argc, char** argv)
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create window
-    GLFWwindow* window = glfwCreateWindow(1920, 1080, "D&D DM Toolbox", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(1920, 1080, "Boîte à Outils MJ D&D", nullptr, nullptr);
     if (window == nullptr)
         return 1;
 
@@ -95,26 +95,26 @@ int main(int argc, char** argv)
         // Menu Bar
         if (ImGui::BeginMenuBar())
         {
-            if (ImGui::BeginMenu("File"))
+            if (ImGui::BeginMenu("Fichier"))
             {
-                if (ImGui::MenuItem("Exit"))
+                if (ImGui::MenuItem("Quitter"))
                     glfwSetWindowShouldClose(window, true);
                 ImGui::EndMenu();
             }
 
-            if (ImGui::BeginMenu("Tools"))
+            if (ImGui::BeginMenu("Outils"))
             {
-                if (ImGui::MenuItem("Character Creator")) {
+                if (ImGui::MenuItem("Créateur de Personnage")) {
                     characterCreator.Show();
                 }
-                ImGui::MenuItem("Combat Tracker", nullptr, &show_combat_tracker);
-                ImGui::MenuItem("Dungeon Generator", nullptr, &show_dungeon_generator);
+                ImGui::MenuItem("Gestionnaire de Combat", nullptr, &show_combat_tracker);
+                ImGui::MenuItem("Générateur de Donjon", nullptr, &show_dungeon_generator);
                 ImGui::EndMenu();
             }
 
-            if (ImGui::BeginMenu("Help"))
+            if (ImGui::BeginMenu("Aide"))
             {
-                if (ImGui::MenuItem("About"))
+                if (ImGui::MenuItem("À propos"))
                 {
                     // TODO: Show about dialog
                 }
@@ -127,24 +127,24 @@ int main(int argc, char** argv)
         ImGui::End();
 
         // Welcome window
-        ImGui::Begin("Welcome to D&D DM Toolbox");
-        ImGui::Text("Welcome, Dungeon Master!");
+        ImGui::Begin("Bienvenue dans la Boîte à Outils MJ D&D");
+        ImGui::Text("Bienvenue, Maître du Donjon !");
         ImGui::Separator();
-        ImGui::TextWrapped("This toolbox provides comprehensive tools for managing your D&D 5e campaigns.");
+        ImGui::TextWrapped("Cette boîte à outils fournit des outils complets pour gérer vos campagnes D&D 5e.");
         ImGui::Spacing();
 
-        ImGui::Text("Quick Start:");
-        if (ImGui::Button("Create Character", ImVec2(200, 40)))
+        ImGui::Text("Démarrage Rapide :");
+        if (ImGui::Button("Créer un Personnage", ImVec2(220, 40)))
             characterCreator.Show();
         ImGui::SameLine();
-        if (ImGui::Button("Start Combat", ImVec2(200, 40)))
+        if (ImGui::Button("Lancer un Combat", ImVec2(220, 40)))
             show_combat_tracker = true;
-        if (ImGui::Button("Generate Dungeon", ImVec2(200, 40)))
+        if (ImGui::Button("Générer un Donjon", ImVec2(220, 40)))
             show_dungeon_generator = true;
 
         ImGui::Spacing();
         ImGui::Separator();
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+        ImGui::Text("Performance : %.3f ms/image (%.1f FPS)",
                     1000.0f / io.Framerate, io.Framerate);
         ImGui::End();
 
@@ -154,18 +154,18 @@ int main(int argc, char** argv)
         // Combat Tracker Window
         if (show_combat_tracker)
         {
-            ImGui::Begin("Combat Tracker", &show_combat_tracker);
-            ImGui::Text("Combat tracking interface coming soon!");
-            ImGui::TextWrapped("Track initiative, HP, conditions, and manage encounters.");
+            ImGui::Begin("Gestionnaire de Combat", &show_combat_tracker);
+            ImGui::Text("Interface de gestion de combat bientôt disponible !");
+            ImGui::TextWrapped("Suivez l'initiative, les PV, les conditions et gérez les rencontres.");
             ImGui::End();
         }
 
         // Dungeon Generator Window
         if (show_dungeon_generator)
         {
-            ImGui::Begin("Dungeon Generator", &show_dungeon_generator);
-            ImGui::Text("Dungeon generator coming soon!");
-            ImGui::TextWrapped("Procedurally generate dungeons and maps for your adventures.");
+            ImGui::Begin("Générateur de Donjon", &show_dungeon_generator);
+            ImGui::Text("Générateur de donjon bientôt disponible !");
+            ImGui::TextWrapped("Générez des donjons et des cartes de manière procédurale pour vos aventures.");
             ImGui::End();
         }
 

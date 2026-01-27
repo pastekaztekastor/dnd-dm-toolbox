@@ -183,48 +183,48 @@ class CharacterHelper {
 public:
     static std::string RaceToString(Race race) {
         static const std::map<Race, std::string> names = {
-            {Race::Human, "Human"},
-            {Race::Elf, "Elf"},
-            {Race::Dwarf, "Dwarf"},
-            {Race::Halfling, "Halfling"},
-            {Race::Dragonborn, "Dragonborn"},
+            {Race::Human, "Humain"},
+            {Race::Elf, "Elfe"},
+            {Race::Dwarf, "Nain"},
+            {Race::Halfling, "Halfelin"},
+            {Race::Dragonborn, "Drakéide"},
             {Race::Gnome, "Gnome"},
-            {Race::HalfElf, "Half-Elf"},
-            {Race::HalfOrc, "Half-Orc"},
-            {Race::Tiefling, "Tiefling"}
+            {Race::HalfElf, "Demi-Elfe"},
+            {Race::HalfOrc, "Demi-Orc"},
+            {Race::Tiefling, "Tieffelin"}
         };
         return names.at(race);
     }
 
     static std::string ClassToString(CharacterClass charClass) {
         static const std::map<CharacterClass, std::string> names = {
-            {CharacterClass::Barbarian, "Barbarian"},
-            {CharacterClass::Bard, "Bard"},
-            {CharacterClass::Cleric, "Cleric"},
-            {CharacterClass::Druid, "Druid"},
-            {CharacterClass::Fighter, "Fighter"},
-            {CharacterClass::Monk, "Monk"},
+            {CharacterClass::Barbarian, "Barbare"},
+            {CharacterClass::Bard, "Barde"},
+            {CharacterClass::Cleric, "Clerc"},
+            {CharacterClass::Druid, "Druide"},
+            {CharacterClass::Fighter, "Guerrier"},
+            {CharacterClass::Monk, "Moine"},
             {CharacterClass::Paladin, "Paladin"},
-            {CharacterClass::Ranger, "Ranger"},
-            {CharacterClass::Rogue, "Rogue"},
-            {CharacterClass::Sorcerer, "Sorcerer"},
-            {CharacterClass::Warlock, "Warlock"},
-            {CharacterClass::Wizard, "Wizard"}
+            {CharacterClass::Ranger, "Rôdeur"},
+            {CharacterClass::Rogue, "Roublard"},
+            {CharacterClass::Sorcerer, "Ensorceleur"},
+            {CharacterClass::Warlock, "Sorcier"},
+            {CharacterClass::Wizard, "Magicien"}
         };
         return names.at(charClass);
     }
 
     static std::string AlignmentToString(Alignment alignment) {
         static const std::map<Alignment, std::string> names = {
-            {Alignment::LawfulGood, "Lawful Good"},
-            {Alignment::NeutralGood, "Neutral Good"},
-            {Alignment::ChaoticGood, "Chaotic Good"},
-            {Alignment::LawfulNeutral, "Lawful Neutral"},
-            {Alignment::TrueNeutral, "True Neutral"},
-            {Alignment::ChaoticNeutral, "Chaotic Neutral"},
-            {Alignment::LawfulEvil, "Lawful Evil"},
-            {Alignment::NeutralEvil, "Neutral Evil"},
-            {Alignment::ChaoticEvil, "Chaotic Evil"}
+            {Alignment::LawfulGood, "Loyal Bon"},
+            {Alignment::NeutralGood, "Neutre Bon"},
+            {Alignment::ChaoticGood, "Chaotique Bon"},
+            {Alignment::LawfulNeutral, "Loyal Neutre"},
+            {Alignment::TrueNeutral, "Neutre Strict"},
+            {Alignment::ChaoticNeutral, "Chaotique Neutre"},
+            {Alignment::LawfulEvil, "Loyal Mauvais"},
+            {Alignment::NeutralEvil, "Neutre Mauvais"},
+            {Alignment::ChaoticEvil, "Chaotique Mauvais"}
         };
         return names.at(alignment);
     }
