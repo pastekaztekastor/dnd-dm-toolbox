@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 #include <cstdio>
 #include "../include/ui/CharacterCreatorWindow.h"
+#include "../include/ui/DiceRollerWindow.h"
 
 static void glfw_error_callback(int error, const char* description)
 {
@@ -56,6 +57,8 @@ int main(int argc, char** argv)
 
     // Application state
     UI::CharacterCreatorWindow characterCreator;
+    UI::DiceRollerWindow diceRoller;
+    characterCreator.SetDiceRoller(&diceRoller); // Connect dice roller
     bool show_combat_tracker = false;
     bool show_dungeon_generator = false;
     ImVec4 clear_color = ImVec4(0.1f, 0.1f, 0.12f, 1.00f);
@@ -104,6 +107,10 @@ int main(int argc, char** argv)
 
             if (ImGui::BeginMenu("Outils"))
             {
+                if (ImGui::MenuItem("🎲 Lanceur de Dés")) {
+                    diceRoller.Toggle();
+                }
+                ImGui::Separator();
                 if (ImGui::MenuItem("Créateur de Personnage")) {
                     characterCreator.Show();
                 }
@@ -134,11 +141,14 @@ int main(int argc, char** argv)
         ImGui::Spacing();
 
         ImGui::Text("Démarrage Rapide :");
+        if (ImGui::Button("🎲 Lancer des Dés", ImVec2(220, 40)))
+            diceRoller.Show();
+        ImGui::SameLine();
         if (ImGui::Button("Créer un Personnage", ImVec2(220, 40)))
             characterCreator.Show();
-        ImGui::SameLine();
         if (ImGui::Button("Lancer un Combat", ImVec2(220, 40)))
             show_combat_tracker = true;
+        ImGui::SameLine();
         if (ImGui::Button("Générer un Donjon", ImVec2(220, 40)))
             show_dungeon_generator = true;
 
@@ -147,6 +157,9 @@ int main(int argc, char** argv)
         ImGui::Text("Performance : %.3f ms/image (%.1f FPS)",
                     1000.0f / io.Framerate, io.Framerate);
         ImGui::End();
+
+        // Dice Roller Window
+        diceRoller.Render();
 
         // Character Creator Window
         characterCreator.Render();

@@ -1,4 +1,5 @@
 #include "../../include/ui/CharacterCreatorWindow.h"
+#include "../../include/ui/DiceRollerWindow.h"
 #include <imgui.h>
 #include <algorithm>
 
@@ -170,8 +171,27 @@ void CharacterCreatorWindow::RenderAbilities() {
     ImGui::SameLine();
     if (ImGui::RadioButton("Lancer de Dés (4d6 sans le plus bas)", (int*)&abilityMethod, 2)) {
         abilityMethod = AbilityMethod::Roll;
-        if (ImGui::Button("Lancer les Dés")) {
+    }
+
+    // Button to roll ability scores
+    if (abilityMethod == AbilityMethod::Roll) {
+        if (ImGui::Button("🎲 Lancer les 6 Caractéristiques")) {
             rolledScores = DnD::Dice::RollAbilityScoreSet();
+            // Auto-assign to abilities in order
+            if (rolledScores.size() >= 6) {
+                character->abilityScores.strength = rolledScores[0];
+                character->abilityScores.dexterity = rolledScores[1];
+                character->abilityScores.constitution = rolledScores[2];
+                character->abilityScores.intelligence = rolledScores[3];
+                character->abilityScores.wisdom = rolledScores[4];
+                character->abilityScores.charisma = rolledScores[5];
+            }
+        }
+        if (diceRoller) {
+            ImGui::SameLine();
+            if (ImGui::SmallButton("Ouvrir le Lanceur")) {
+                diceRoller->Show();
+            }
         }
     }
 

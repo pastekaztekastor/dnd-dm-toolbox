@@ -7,9 +7,13 @@
 
 namespace UI {
 
+// Forward declaration
+class DiceRollerWindow;
+
 class CharacterCreatorWindow {
 private:
     std::shared_ptr<DnD::Character> character;
+    DiceRollerWindow* diceRoller; // Pointer to the global dice roller
     bool isOpen;
 
     // Character creation state
@@ -53,6 +57,7 @@ private:
 public:
     CharacterCreatorWindow()
         : character(std::make_shared<DnD::Character>())
+        , diceRoller(nullptr)
         , isOpen(false)
         , creationStep(0)
         , abilityMethod(AbilityMethod::PointBuy)
@@ -65,6 +70,7 @@ public:
         backgroundBuffer[0] = '\0';
     }
 
+    void SetDiceRoller(DiceRollerWindow* roller) { diceRoller = roller; }
     void Show() { isOpen = true; }
     void Hide() { isOpen = false; }
     bool IsOpen() const { return isOpen; }
