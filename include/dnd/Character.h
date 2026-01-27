@@ -278,6 +278,90 @@ public:
                 return 30;
         }
     }
+
+    // Get available skills for a class
+    static std::vector<Skill> GetAvailableSkills(CharacterClass charClass) {
+        static const std::map<CharacterClass, std::vector<Skill>> classSkills = {
+            {CharacterClass::Barbarian, {
+                Skill::AnimalHandling, Skill::Athletics, Skill::Intimidation,
+                Skill::Nature, Skill::Perception, Skill::Survival
+            }},
+            {CharacterClass::Bard, {
+                Skill::Acrobatics, Skill::AnimalHandling, Skill::Arcana,
+                Skill::Athletics, Skill::Deception, Skill::History,
+                Skill::Insight, Skill::Intimidation, Skill::Investigation,
+                Skill::Medicine, Skill::Nature, Skill::Perception,
+                Skill::Performance, Skill::Persuasion, Skill::Religion,
+                Skill::SleightOfHand, Skill::Stealth, Skill::Survival
+            }},
+            {CharacterClass::Cleric, {
+                Skill::History, Skill::Insight, Skill::Medicine,
+                Skill::Persuasion, Skill::Religion
+            }},
+            {CharacterClass::Druid, {
+                Skill::Arcana, Skill::AnimalHandling, Skill::Insight,
+                Skill::Medicine, Skill::Nature, Skill::Perception,
+                Skill::Religion, Skill::Survival
+            }},
+            {CharacterClass::Fighter, {
+                Skill::Acrobatics, Skill::AnimalHandling, Skill::Athletics,
+                Skill::History, Skill::Insight, Skill::Intimidation,
+                Skill::Perception, Skill::Survival
+            }},
+            {CharacterClass::Monk, {
+                Skill::Acrobatics, Skill::Athletics, Skill::History,
+                Skill::Insight, Skill::Religion, Skill::Stealth
+            }},
+            {CharacterClass::Paladin, {
+                Skill::Athletics, Skill::Insight, Skill::Intimidation,
+                Skill::Medicine, Skill::Persuasion, Skill::Religion
+            }},
+            {CharacterClass::Ranger, {
+                Skill::AnimalHandling, Skill::Athletics, Skill::Insight,
+                Skill::Investigation, Skill::Nature, Skill::Perception,
+                Skill::Stealth, Skill::Survival
+            }},
+            {CharacterClass::Rogue, {
+                Skill::Acrobatics, Skill::Athletics, Skill::Deception,
+                Skill::Insight, Skill::Intimidation, Skill::Investigation,
+                Skill::Perception, Skill::Performance, Skill::Persuasion,
+                Skill::SleightOfHand, Skill::Stealth
+            }},
+            {CharacterClass::Sorcerer, {
+                Skill::Arcana, Skill::Deception, Skill::Insight,
+                Skill::Intimidation, Skill::Persuasion, Skill::Religion
+            }},
+            {CharacterClass::Warlock, {
+                Skill::Arcana, Skill::Deception, Skill::History,
+                Skill::Intimidation, Skill::Investigation, Skill::Nature,
+                Skill::Religion
+            }},
+            {CharacterClass::Wizard, {
+                Skill::Arcana, Skill::History, Skill::Insight,
+                Skill::Investigation, Skill::Medicine, Skill::Religion
+            }}
+        };
+        return classSkills.at(charClass);
+    }
+
+    // Get number of skill proficiencies a class can choose
+    static int GetSkillChoices(CharacterClass charClass) {
+        static const std::map<CharacterClass, int> choices = {
+            {CharacterClass::Barbarian, 2},
+            {CharacterClass::Bard, 3},
+            {CharacterClass::Cleric, 2},
+            {CharacterClass::Druid, 2},
+            {CharacterClass::Fighter, 2},
+            {CharacterClass::Monk, 2},
+            {CharacterClass::Paladin, 2},
+            {CharacterClass::Ranger, 3},
+            {CharacterClass::Rogue, 4},
+            {CharacterClass::Sorcerer, 2},
+            {CharacterClass::Warlock, 2},
+            {CharacterClass::Wizard, 2}
+        };
+        return choices.at(charClass);
+    }
 };
 
 } // namespace DnD

@@ -251,7 +251,28 @@ void CharacterCreatorWindow::RenderSkills() {
     ImGui::Text("Maîtrises de Compétences");
     ImGui::Spacing();
 
-    ImGui::TextWrapped("Sélectionnez vos maîtrises de compétences. Le nombre de compétences que vous pouvez choisir dépend de votre classe et de votre historique.");
+    // Get available skills for the current class
+    auto availableSkills = DnD::CharacterHelper::GetAvailableSkills(character->characterClass);
+    int maxSkills = DnD::CharacterHelper::GetSkillChoices(character->characterClass);
+
+    // Count currently selected skills
+    int selectedCount = 0;
+    for (const auto& [skill, prof] : character->skillProficiencies) {
+        if (prof != DnD::ProficiencyLevel::None) {
+            selectedCount++;
+        }
+    }
+
+    // Display skill counter
+    ImGui::TextWrapped("Sélectionnez vos maîtrises de compétences.");
+    ImGui::Spacing();
+    if (selectedCount > maxSkills) {
+        ImGui::TextColored(ImVec4(1, 0, 0, 1), "Compétences : %d / %d (Trop de compétences !)", selectedCount, maxSkills);
+    } else if (selectedCount == maxSkills) {
+        ImGui::TextColored(ImVec4(0, 1, 0, 1), "Compétences : %d / %d", selectedCount, maxSkills);
+    } else {
+        ImGui::Text("Compétences : %d / %d", selectedCount, maxSkills);
+    }
     ImGui::Spacing();
 
     // Render all skills
@@ -261,8 +282,19 @@ void CharacterCreatorWindow::RenderSkills() {
         std::string skillName = DnD::SkillHelper::ToString(skill);
         std::string abilityName = DnD::AbilityHelper::ToShortString(ability);
 
+        // Check if this skill is available for the current class
+        bool isAvailable = std::find(availableSkills.begin(), availableSkills.end(), skill) != availableSkills.end();
+
         bool isProficient = character->skillProficiencies[skill] == DnD::ProficiencyLevel::Proficient;
         bool isExpert = character->skillProficiencies[skill] == DnD::ProficiencyLevel::Expert;
+
+        // Disable checkbox if skill is not available or if max skills reached (and this skill is not already selected)
+        bool disabled = !isAvailable || (selectedCount >= maxSkills && !isProficient && !isExpert);
+
+        if (disabled) {
+            ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.5f);
+            ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        }
 
         if (ImGui::Checkbox((skillName + " (" + abilityName + ")").c_str(), &isProficient)) {
             if (isProficient) {
@@ -272,9 +304,21 @@ void CharacterCreatorWindow::RenderSkills() {
             }
         }
 
+        if (disabled) {
+            ImGui::PopItemFlag();
+            ImGui::PopStyleVar();
+        }
+
         // Expert checkbox (for Rogues, Bards, etc.)
         if (character->characterClass == DnD::CharacterClass::Rogue && character->level >= 1) {
             ImGui::SameLine();
+
+            bool expertDisabled = !isProficient && !isExpert;
+            if (expertDisabled) {
+                ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.5f);
+                ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+            }
+
             if (ImGui::Checkbox(("Expert##" + skillName).c_str(), &isExpert)) {
                 if (isExpert) {
                     character->skillProficiencies[skill] = DnD::ProficiencyLevel::Expert;
@@ -282,6 +326,11 @@ void CharacterCreatorWindow::RenderSkills() {
                     character->skillProficiencies[skill] = isProficient ?
                         DnD::ProficiencyLevel::Proficient : DnD::ProficiencyLevel::None;
                 }
+            }
+
+            if (expertDisabled) {
+                ImGui::PopItemFlag();
+                ImGui::PopStyleVar();
             }
         }
 
