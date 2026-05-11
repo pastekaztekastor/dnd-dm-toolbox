@@ -85,8 +85,9 @@ void CharacterCreatorWindow::RenderRaceClass() {
 
     // Race selection
     ImGui::Text("Race :");
+    ImGui::SameLine();
     if (helpWindow) {
-        ContextualHelpWindow::ShowTooltip("Votre race détermine vos bonus de caractéristiques, votre vitesse, et vos capacités spéciales.");
+        helpWindow->ShowHelpMarker("race_general");
     }
 
     auto races = DnD::CharacterHelper::GetAllRaces();
@@ -102,15 +103,48 @@ void CharacterCreatorWindow::RenderRaceClass() {
         {DnD::Race::Tiefling, "race_tiefling"}
     };
 
-    for (size_t i = 0; i < races.size(); ++i) {
-        if (ImGui::RadioButton(DnD::CharacterHelper::RaceToString(races[i]).c_str(), &selectedRace, i)) {
-            character->race = races[i];
-            character->speed = DnD::CharacterHelper::GetRacialSpeed(races[i]);
+    // Créer les labels pour le combo avec bonus de stats
+    static const std::map<DnD::Race, std::string> raceBonuses = {
+        {DnD::Race::Human, "Humain (+1 à toutes)"},
+        {DnD::Race::Elf, "Elfe (+2 DEX)"},
+        {DnD::Race::Dwarf, "Nain (+2 CON)"},
+        {DnD::Race::Halfling, "Halfelin (+2 DEX)"},
+        {DnD::Race::Dragonborn, "Drakéide (+2 FOR, +1 CHA)"},
+        {DnD::Race::Gnome, "Gnome (+2 INT)"},
+        {DnD::Race::HalfElf, "Demi-Elfe (+2 CHA, +1 à 2 autres)"},
+        {DnD::Race::HalfOrc, "Demi-Orc (+2 FOR, +1 CON)"},
+        {DnD::Race::Tiefling, "Tieffelin (+2 CHA, +1 INT)"}
+    };
+
+    // Construire le preview du combo
+    const char* racePreview = raceBonuses.at(races[selectedRace]).c_str();
+
+    if (ImGui::BeginCombo("##RaceCombo", racePreview)) {
+        for (size_t i = 0; i < races.size(); ++i) {
+            const bool isSelected = (selectedRace == static_cast<int>(i));
+            if (ImGui::Selectable(raceBonuses.at(races[i]).c_str(), isSelected)) {
+                selectedRace = i;
+                character->race = races[i];
+                character->speed = DnD::CharacterHelper::GetRacialSpeed(races[i]);
+            }
+
+            // Afficher l'aide contextuelle au survol
+            if (helpWindow && ImGui::IsItemHovered()) {
+                helpWindow->SetHelp(raceHelpKeys.at(races[i]));
+            }
+
+            // Set the initial focus when opening the combo
+            if (isSelected) {
+                ImGui::SetItemDefaultFocus();
+            }
         }
-        if (helpWindow && ImGui::IsItemHovered()) {
-            helpWindow->SetHelp(raceHelpKeys.at(races[i]));
-        }
-        if (i % 3 != 2) ImGui::SameLine();
+        ImGui::EndCombo();
+    }
+
+    // Afficher l'aide de la race sélectionnée en dessous
+    if (helpWindow && selectedRace >= 0 && selectedRace < static_cast<int>(races.size())) {
+        ImGui::Spacing();
+        ImGui::TextWrapped("Vitesse : %d pieds", DnD::CharacterHelper::GetRacialSpeed(races[selectedRace]));
     }
 
     ImGui::Spacing();
@@ -119,8 +153,9 @@ void CharacterCreatorWindow::RenderRaceClass() {
 
     // Class selection
     ImGui::Text("Classe :");
+    ImGui::SameLine();
     if (helpWindow) {
-        ContextualHelpWindow::ShowTooltip("Votre classe détermine vos capacités, vos points de vie, et votre style de jeu.");
+        helpWindow->ShowHelpMarker("class_general");
     }
 
     auto classes = DnD::CharacterHelper::GetAllClasses();
@@ -139,37 +174,76 @@ void CharacterCreatorWindow::RenderRaceClass() {
         {DnD::CharacterClass::Wizard, "class_wizard"}
     };
 
-    for (size_t i = 0; i < classes.size(); ++i) {
-        if (ImGui::RadioButton(DnD::CharacterHelper::ClassToString(classes[i]).c_str(), &selectedClass, i)) {
-            character->characterClass = classes[i];
+    // Créer les labels pour le combo avec dé de vie et rôle
+    static const std::map<DnD::CharacterClass, std::string> classInfos = {
+        {DnD::CharacterClass::Barbarian, "Barbare (DV: d12, Tank/DPS)"},
+        {DnD::CharacterClass::Bard, "Barde (DV: d8, Support/Utility)"},
+        {DnD::CharacterClass::Cleric, "Clerc (DV: d8, Heal/Support)"},
+        {DnD::CharacterClass::Druid, "Druide (DV: d8, Support/Tank)"},
+        {DnD::CharacterClass::Fighter, "Guerrier (DV: d10, Tank/DPS)"},
+        {DnD::CharacterClass::Monk, "Moine (DV: d8, DPS/Mobility)"},
+        {DnD::CharacterClass::Paladin, "Paladin (DV: d10, Tank/Heal)"},
+        {DnD::CharacterClass::Ranger, "Rôdeur (DV: d10, DPS/Utility)"},
+        {DnD::CharacterClass::Rogue, "Roublard (DV: d8, DPS/Skill)"},
+        {DnD::CharacterClass::Sorcerer, "Ensorceleur (DV: d6, DPS/Blast)"},
+        {DnD::CharacterClass::Warlock, "Sorcier (DV: d8, DPS/Utility)"},
+        {DnD::CharacterClass::Wizard, "Magicien (DV: d6, Control/Utility)"}
+    };
 
-            // Set class-based proficiencies
-            // This is simplified - real implementation would need full class data
-            switch (classes[i]) {
-                case DnD::CharacterClass::Fighter:
-                    character->savingThrowProficiencies[DnD::Ability::Strength] = true;
-                    character->savingThrowProficiencies[DnD::Ability::Constitution] = true;
-                    break;
-                case DnD::CharacterClass::Wizard:
-                    character->savingThrowProficiencies[DnD::Ability::Intelligence] = true;
-                    character->savingThrowProficiencies[DnD::Ability::Wisdom] = true;
-                    break;
-                case DnD::CharacterClass::Rogue:
-                    character->savingThrowProficiencies[DnD::Ability::Dexterity] = true;
-                    character->savingThrowProficiencies[DnD::Ability::Intelligence] = true;
-                    break;
-                case DnD::CharacterClass::Cleric:
-                    character->savingThrowProficiencies[DnD::Ability::Wisdom] = true;
-                    character->savingThrowProficiencies[DnD::Ability::Charisma] = true;
-                    break;
-                default:
-                    break;
+    // Construire le preview du combo
+    const char* classPreview = classInfos.at(classes[selectedClass]).c_str();
+
+    if (ImGui::BeginCombo("##ClassCombo", classPreview)) {
+        for (size_t i = 0; i < classes.size(); ++i) {
+            const bool isSelected = (selectedClass == static_cast<int>(i));
+            if (ImGui::Selectable(classInfos.at(classes[i]).c_str(), isSelected)) {
+                selectedClass = i;
+                character->characterClass = classes[i];
+
+                // Set class-based proficiencies
+                // This is simplified - real implementation would need full class data
+                switch (classes[i]) {
+                    case DnD::CharacterClass::Fighter:
+                        character->savingThrowProficiencies[DnD::Ability::Strength] = true;
+                        character->savingThrowProficiencies[DnD::Ability::Constitution] = true;
+                        break;
+                    case DnD::CharacterClass::Wizard:
+                        character->savingThrowProficiencies[DnD::Ability::Intelligence] = true;
+                        character->savingThrowProficiencies[DnD::Ability::Wisdom] = true;
+                        break;
+                    case DnD::CharacterClass::Rogue:
+                        character->savingThrowProficiencies[DnD::Ability::Dexterity] = true;
+                        character->savingThrowProficiencies[DnD::Ability::Intelligence] = true;
+                        break;
+                    case DnD::CharacterClass::Cleric:
+                        character->savingThrowProficiencies[DnD::Ability::Wisdom] = true;
+                        character->savingThrowProficiencies[DnD::Ability::Charisma] = true;
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            // Afficher l'aide contextuelle au survol
+            if (helpWindow && ImGui::IsItemHovered()) {
+                helpWindow->SetHelp(classHelpKeys.at(classes[i]));
+            }
+
+            // Set the initial focus when opening the combo
+            if (isSelected) {
+                ImGui::SetItemDefaultFocus();
             }
         }
-        if (helpWindow && ImGui::IsItemHovered()) {
-            helpWindow->SetHelp(classHelpKeys.at(classes[i]));
-        }
-        if (i % 3 != 2) ImGui::SameLine();
+        ImGui::EndCombo();
+    }
+
+    // Afficher des infos sur la classe sélectionnée
+    if (selectedClass >= 0 && selectedClass < static_cast<int>(classes.size())) {
+        ImGui::Spacing();
+        int hitDie = DnD::CharacterHelper::GetHitDie(classes[selectedClass]);
+        ImGui::TextWrapped("Dé de vie : d%d | Compétences à choisir : %d",
+            hitDie,
+            DnD::CharacterHelper::GetSkillChoices(classes[selectedClass]));
     }
 
     ImGui::Spacing();
@@ -178,17 +252,34 @@ void CharacterCreatorWindow::RenderRaceClass() {
 
     // Alignment
     ImGui::Text("Alignement :");
+    ImGui::SameLine();
+    if (helpWindow) {
+        helpWindow->ShowHelpMarker("alignment_general");
+    }
+
     const char* alignments[] = {
         "Loyal Bon", "Neutre Bon", "Chaotique Bon",
         "Loyal Neutre", "Neutre Strict", "Chaotique Neutre",
         "Loyal Mauvais", "Neutre Mauvais", "Chaotique Mauvais"
     };
-    for (int i = 0; i < 9; ++i) {
-        if (ImGui::RadioButton(alignments[i], &selectedAlignment, i)) {
-            character->alignment = static_cast<DnD::Alignment>(i);
+
+    if (ImGui::BeginCombo("##AlignmentCombo", alignments[selectedAlignment])) {
+        for (int i = 0; i < 9; ++i) {
+            const bool isSelected = (selectedAlignment == i);
+            if (ImGui::Selectable(alignments[i], isSelected)) {
+                selectedAlignment = i;
+                character->alignment = static_cast<DnD::Alignment>(i);
+            }
+
+            if (isSelected) {
+                ImGui::SetItemDefaultFocus();
+            }
         }
-        if (i % 3 != 2) ImGui::SameLine();
+        ImGui::EndCombo();
     }
+
+    ImGui::Spacing();
+    ImGui::TextWrapped("L'alignement représente les valeurs morales et éthiques de votre personnage.");
 }
 
 void CharacterCreatorWindow::RenderAbilities() {
