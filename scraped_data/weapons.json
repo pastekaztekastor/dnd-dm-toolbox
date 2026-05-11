@@ -1,0 +1,298 @@
+[
+  {
+    "name": "Bâton",
+    "name_en": "Quarterstaff",
+    "damage": "1d6 contondant",
+    "weight": "2 kg",
+    "price": "2 pa",
+    "properties": "Polyvalente (1d8)"
+  },
+  {
+    "name": "Dague",
+    "name_en": "Dagger",
+    "damage": "1d4 perforant",
+    "weight": "500 g",
+    "price": "2 po",
+    "properties": "Finesse, légère, lancer (portée 6 m/18 m)"
+  },
+  {
+    "name": "Gourdin",
+    "name_en": "Club",
+    "damage": "1d4 contondant",
+    "weight": "1 kg",
+    "price": "1 pa",
+    "properties": "Légère"
+  },
+  {
+    "name": "Hachette",
+    "name_en": "Handaxe",
+    "damage": "1d6 tranchant",
+    "weight": "1 kg",
+    "price": "5 po",
+    "properties": "Légère, lancer (portée 6 m/18 m)"
+  },
+  {
+    "name": "Javeline",
+    "name_en": "Javelin",
+    "damage": "1d6 perforant",
+    "weight": "1 kg",
+    "price": "5 pa",
+    "properties": "Lancer (portée 9 m/36 m)"
+  },
+  {
+    "name": "Lance",
+    "name_en": "Spear",
+    "damage": "1d6 perforant",
+    "weight": "1,5 kg",
+    "price": "1 po",
+    "properties": "Lancer (portée 6 m/18 m), polyvalente (1d8)"
+  },
+  {
+    "name": "Marteau léger",
+    "name_en": "Light hammer",
+    "damage": "1d4 contondant",
+    "weight": "1 kg",
+    "price": "2 po",
+    "properties": "Légère, lancer (portée 6 m/18 m)"
+  },
+  {
+    "name": "Masse d'armes",
+    "name_en": "Mace",
+    "damage": "1d6 contondant",
+    "weight": "2 kg",
+    "price": "5 po",
+    "properties": "-"
+  },
+  {
+    "name": "Massue",
+    "name_en": "Greatclub",
+    "damage": "1d8 contondant",
+    "weight": "5 kg",
+    "price": "2 pa",
+    "properties": "À deux mains"
+  },
+  {
+    "name": "Serpe",
+    "name_en": "Sickle",
+    "damage": "1d4 tranchant",
+    "weight": "1 kg",
+    "price": "1 po",
+    "properties": "Légère"
+  },
+  {
+    "name": "Arbalète légère",
+    "name_en": "Crossbow, light",
+    "damage": "1d8 perforant",
+    "weight": "2,5 kg",
+    "price": "25 po",
+    "properties": "Munitions (portée 24 m/96 m), chargement, à deux mains"
+  },
+  {
+    "name": "Arc court",
+    "name_en": "Shortbow",
+    "damage": "1d6 perforant",
+    "weight": "1 kg",
+    "price": "25 po",
+    "properties": "Munitions (portée 24 m/96 m), à deux mains"
+  },
+  {
+    "name": "Fléchette",
+    "name_en": "Dart",
+    "damage": "1d4 perforant",
+    "weight": "100 g",
+    "price": "5 pc",
+    "properties": "Finesse, lancer (portée 6 m/18 m)"
+  },
+  {
+    "name": "Fronde",
+    "name_en": "Sling",
+    "damage": "1d4 contondant",
+    "weight": "-",
+    "price": "1 pa",
+    "properties": "Munitions (portée 9 m/36 m)"
+  },
+  {
+    "name": "Cimeterre",
+    "name_en": "Scimitar",
+    "damage": "1d6 tranchant",
+    "weight": "1,5 kg",
+    "price": "25 po",
+    "properties": "Finesse, légère"
+  },
+  {
+    "name": "Coutille",
+    "name_en": "Glaive",
+    "damage": "1d10 tranchant",
+    "weight": "3 kg",
+    "price": "20 po",
+    "properties": "Lourde, allonge, à deux mains"
+  },
+  {
+    "name": "Épée à deux mains",
+    "name_en": "Greatsword",
+    "damage": "2d6 tranchant",
+    "weight": "3 kg",
+    "price": "50 po",
+    "properties": "Lourde, à deux mains"
+  },
+  {
+    "name": "Épée courte",
+    "name_en": "Shortsword",
+    "damage": "1d6 perforant",
+    "weight": "1 kg",
+    "price": "10 po",
+    "properties": "Finesse, légère"
+  },
+  {
+    "name": "Épée longue",
+    "name_en": "Longsword",
+    "damage": "1d8 tranchant",
+    "weight": "1,5 kg",
+    "price": "15 po",
+    "properties": "Polyvalente (1d10)"
+  },
+  {
+    "name": "Fléau d'armes",
+    "name_en": "Flail",
+    "damage": "1d8 contondant",
+    "weight": "1 kg",
+    "price": "10 po",
+    "properties": "-"
+  },
+  {
+    "name": "Fouet",
+    "name_en": "Whip",
+    "damage": "1d4 tranchant",
+    "weight": "1,5 kg",
+    "price": "2 po",
+    "properties": "Finesse, allonge"
+  },
+  {
+    "name": "Hache à deux mains",
+    "name_en": "Greataxe",
+    "damage": "1d12 tranchant",
+    "weight": "3,5 kg",
+    "price": "30 po",
+    "properties": "Lourde, à deux mains"
+  },
+  {
+    "name": "Hache d'armes",
+    "name_en": "Battleaxe",
+    "damage": "1d8 tranchant",
+    "weight": "2 kg",
+    "price": "10 po",
+    "properties": "Polyvalente (1d10)"
+  },
+  {
+    "name": "Hallebarde",
+    "name_en": "Halberd",
+    "damage": "1d10 tranchant",
+    "weight": "3 kg",
+    "price": "20 po",
+    "properties": "Lourde, allonge, à deux mains"
+  },
+  {
+    "name": "Lance d’arçon",
+    "name_en": "Lance",
+    "damage": "1d12 perforant",
+    "weight": "3 kg",
+    "price": "10 po",
+    "properties": "Allonge, spécial"
+  },
+  {
+    "name": "Maillet",
+    "name_en": "Maul",
+    "damage": "2d6 contondant",
+    "weight": "5 kg",
+    "price": "10 po",
+    "properties": "Lourde, à deux mains"
+  },
+  {
+    "name": "Marteau de guerre",
+    "name_en": "Warhammer",
+    "damage": "1d8 contondant",
+    "weight": "1 kg",
+    "price": "15 po",
+    "properties": "Polyvalente (1d10)"
+  },
+  {
+    "name": "Morgenstern",
+    "name_en": "Morningstar",
+    "damage": "1d8 perforant",
+    "weight": "2 kg",
+    "price": "15 po",
+    "properties": "-"
+  },
+  {
+    "name": "Pic de guerre",
+    "name_en": "War pick",
+    "damage": "1d8 perforant",
+    "weight": "1 kg",
+    "price": "5 po",
+    "properties": "-"
+  },
+  {
+    "name": "Pique",
+    "name_en": "Pike",
+    "damage": "1d10 perforant",
+    "weight": "9 kg",
+    "price": "5 po",
+    "properties": "Lourde, allonge, à deux mains"
+  },
+  {
+    "name": "Rapière",
+    "name_en": "Rapier",
+    "damage": "1d8 perforant",
+    "weight": "1 kg",
+    "price": "25 po",
+    "properties": "Finesse"
+  },
+  {
+    "name": "Trident",
+    "name_en": "Trident",
+    "damage": "1d6 perforant",
+    "weight": "2 kg",
+    "price": "5 po",
+    "properties": "Lancer (portée 6 m/18 m), polyvalente (1d8)"
+  },
+  {
+    "name": "Arbalète de poing",
+    "name_en": "Crossbow, hand",
+    "damage": "1d6 perforant",
+    "weight": "1,5 kg",
+    "price": "75 po",
+    "properties": "Munitions (portée 9 m/36 m), légère, chargement"
+  },
+  {
+    "name": "Arbalète lourde",
+    "name_en": "Crossbow, heavy",
+    "damage": "1d10 perforant",
+    "weight": "9 kg",
+    "price": "50 po",
+    "properties": "Munitions (portée 30 m/120 m), lourde, chargement, à deux mains"
+  },
+  {
+    "name": "Arc long",
+    "name_en": "Longbow",
+    "damage": "1d8 perforant",
+    "weight": "1 kg",
+    "price": "50 po",
+    "properties": "Munitions (portée 45 m/180 m), lourde, à deux mains"
+  },
+  {
+    "name": "Filet",
+    "name_en": "Net",
+    "damage": "",
+    "weight": "1,5 kg",
+    "price": "1 po",
+    "properties": "Spécial, lancer (portée 1,50 m/ 4,50 m)"
+  },
+  {
+    "name": "Sarbacane",
+    "name_en": "Blowgun",
+    "damage": "1 perforant",
+    "weight": "500 g",
+    "price": "10 po",
+    "properties": "Munitions (portée 7,50 m/30 m), chargement"
+  }
+]

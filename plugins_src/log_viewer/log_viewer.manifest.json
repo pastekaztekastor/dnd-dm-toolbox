@@ -1,0 +1,40 @@
+{
+  "id": "log_viewer",
+  "name": "Journal de Campagne",
+  "description": "Affiche l'historique complet de toutes les actions de la campagne",
+  "version": "1.0.0",
+  "author": "D&D DM Toolbox Team",
+
+  "menu": {
+    "category": "Affichage",
+    "order": 1,
+    "icon": "📜",
+    "shortcuts": ["Ctrl+L"]
+  },
+
+  "requires": {
+    "database": false,
+    "event_bus": false,
+    "logger": true
+  },
+
+  "permissions": {
+    "read_database": false,
+    "write_campaign": true,
+    "publish_events": false,
+    "subscribe_events": false
+  },
+
+  "events": {
+    "publishes": [],
+    "subscribes": []
+  },
+
+  "ui": {
+    "window_title": "Journal de Campagne",
+    "default_width": 800,
+    "default_height": 600,
+    "resizable": true,
+    "can_dock": true
+  }
+}

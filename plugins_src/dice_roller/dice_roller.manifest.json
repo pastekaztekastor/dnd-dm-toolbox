@@ -1,0 +1,42 @@
+{
+  "id": "dice_roller",
+  "name": "Dice Roller",
+  "description": "Lanceur de dés pour D&D 5e avec historique",
+  "version": "1.0.0",
+  "author": "D&D DM Toolbox Team",
+
+  "menu": {
+    "category": "Jeu",
+    "order": 1,
+    "icon": "🎲",
+    "shortcuts": ["Ctrl+D"]
+  },
+
+  "requires": {
+    "database": false,
+    "event_bus": true,
+    "logger": true
+  },
+
+  "permissions": {
+    "read_database": false,
+    "write_campaign": true,
+    "publish_events": true,
+    "subscribe_events": false
+  },
+
+  "events": {
+    "publishes": [
+      "dice.rolled"
+    ],
+    "subscribes": []
+  },
+
+  "ui": {
+    "window_title": "Dice Roller",
+    "default_width": 400,
+    "default_height": 500,
+    "resizable": true,
+    "can_dock": true
+  }
+}

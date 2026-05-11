@@ -1,0 +1,39 @@
+{
+  "id": "note",
+  "name": "Note",
+  "description": "Bloque note de votre aventure au format texte (futurement au format md)",
+  "version": "1.0.0",
+  "author": "D&D DM Toolbox Team",
+
+  "menu": {
+    "category": "Outils",
+    "order": 10,
+    "shortcuts": []
+  },
+
+  "requires": {
+    "database": false,
+    "event_bus": false,
+    "logger": true
+  },
+
+  "permissions": {
+    "read_database": false,
+    "write_campaign": true,
+    "publish_events": false,
+    "subscribe_events": false
+  },
+
+  "events": {
+    "publishes": [],
+    "subscribes": []
+  },
+
+  "ui": {
+    "window_title": "Note",
+    "default_width": 600,
+    "default_height": 400,
+    "resizable": true,
+    "can_dock": true
+  }
+}

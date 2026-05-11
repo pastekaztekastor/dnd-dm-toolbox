@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 project(DnD_DM_Toolbox VERSION 1.0.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -11,6 +11,8 @@ option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 # Find required packages
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
+find_package(PostgreSQL REQUIRED)
+find_package(SQLite3 REQUIRED)
 
 # Dear ImGui
 set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs/imgui)
@@ -30,13 +32,20 @@ target_include_directories(imgui PUBLIC
 )
 target_link_libraries(imgui PUBLIC OpenGL::GL glfw)
 
+# Compiler ImGui avec -fPIC pour permettre son utilisation dans les plugins (.so)
+set_property(TARGET imgui PROPERTY POSITION_INDEPENDENT_CODE ON)
+
 # nlohmann/json (header-only)
 set(JSON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs/json/include)
 
+# nativefiledialog-extended (file dialogs)
+add_subdirectory(libs/nfd)
+
 # Main executable
 file(GLOB_RECURSE SOURCES
-    src/*.cpp
-    src/**/*.cpp
+    src/core/*.cpp
+    src/database/*.cpp
+    src/ui/*.cpp
 )
 
 file(GLOB_RECURSE HEADERS
@@ -44,7 +53,11 @@ file(GLOB_RECURSE HEADERS
     include/**/*.h
 )
 
-add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
+# Use main_new.cpp as the entry point
+add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS} src/main_new.cpp)
+
+# Export symbols for plugins to use
+set_target_properties(${PROJECT_NAME} PROPERTIES ENABLE_EXPORTS ON)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -55,6 +68,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     imgui
     OpenGL::GL
     glfw
+    PostgreSQL::PostgreSQL
+    SQLite::SQLite3
+    nfd
     ${CMAKE_DL_LIBS}
 )
 
@@ -70,3 +86,51 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/resources
 # Copy data files
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data
      DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+# ============================================================
+# PLUGINS (Shared Libraries)
+# ============================================================
+
+# Fonction helper pour compiler un plugin
+function(add_plugin PLUGIN_NAME)
+    set(PLUGIN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/plugins_src/${PLUGIN_NAME})
+
+    # Sources du plugin
+    file(GLOB PLUGIN_SOURCES ${PLUGIN_DIR}/*.cpp)
+
+    # Créer la shared library
+    add_library(${PLUGIN_NAME} SHARED ${PLUGIN_SOURCES})
+
+    # Include directories
+    target_include_directories(${PLUGIN_NAME} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${JSON_DIR}
+        ${IMGUI_DIR}
+        ${IMGUI_DIR}/backends
+    )
+
+    # Link avec SQLite3 (pour OnSave/OnLoad) et ImGui
+    target_link_libraries(${PLUGIN_NAME} PRIVATE
+        SQLite::SQLite3
+        imgui
+    )
+
+    # Output dans plugins/
+    set_target_properties(${PLUGIN_NAME} PROPERTIES
+        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/plugins
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/plugins
+    )
+
+    # Copier le manifest.json dans plugins/
+    add_custom_command(TARGET ${PLUGIN_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+            ${PLUGIN_DIR}/${PLUGIN_NAME}.manifest.json
+            ${CMAKE_CURRENT_BINARY_DIR}/plugins/${PLUGIN_NAME}.manifest.json
+    )
+endfunction()
+
+# Compiler les plugins
+add_plugin(character_creator)
+add_plugin(note)
+add_plugin(dice_roller)
+add_plugin(log_viewer)

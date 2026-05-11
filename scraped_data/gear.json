@@ -1,0 +1,596 @@
+[
+  {
+    "name": "Acide (fiole)",
+    "name_en": "Acid",
+    "price": "25 po",
+    "weight": "500 g"
+  },
+  {
+    "name": "Antidote (fiole)",
+    "name_en": "Antitoxin",
+    "price": "50 po",
+    "weight": "-"
+  },
+  {
+    "name": "Balance de marchand",
+    "name_en": "Scale, Merchant’s",
+    "price": "5 po",
+    "weight": "1,5 kg"
+  },
+  {
+    "name": "Bélier portable",
+    "name_en": "Ram, Portable",
+    "price": "4 po",
+    "weight": "17,5 kg"
+  },
+  {
+    "name": "Billes (sac de 1000)",
+    "name_en": "Ball Bearings",
+    "price": "1 po",
+    "weight": "1 kg"
+  },
+  {
+    "name": "Boite d'allume-feu",
+    "name_en": "Tinderbox",
+    "price": "5 pa",
+    "weight": "500 g"
+  },
+  {
+    "name": "Bougie",
+    "name_en": "Candle",
+    "price": "1 pc",
+    "weight": "-"
+  },
+  {
+    "name": "Boulier",
+    "name_en": "Abacus",
+    "price": "2 po",
+    "weight": "1 kg"
+  },
+  {
+    "name": "Bouteille en verre",
+    "name_en": "Bottle, glass",
+    "price": "2 po",
+    "weight": "1 kg"
+  },
+  {
+    "name": "Cadenas",
+    "name_en": "Lock",
+    "price": "10 po",
+    "weight": "500 g"
+  },
+  {
+    "name": "Carquois",
+    "name_en": "Quiver",
+    "price": "1 po",
+    "weight": "500 g"
+  },
+  {
+    "name": "Chaîne (3 m)",
+    "name_en": "Chain",
+    "price": "5 po",
+    "weight": "5 kg"
+  },
+  {
+    "name": "Chausse-trappes (sac de 20)",
+    "name_en": "Caltrops",
+    "price": "1 po",
+    "weight": "1 kg"
+  },
+  {
+    "name": "Chevalière",
+    "name_en": "Signet ring",
+    "price": "5 po",
+    "weight": "-"
+  },
+  {
+    "name": "Cire à cacheter",
+    "name_en": "Sealing wax",
+    "price": "5 pa",
+    "weight": "-"
+  },
+  {
+    "name": "Cloche",
+    "name_en": "Bell",
+    "price": "1 po",
+    "weight": "-"
+  },
+  {
+    "name": "Coffre",
+    "name_en": "Chest",
+    "price": "5 po",
+    "weight": "12,5 kg"
+  },
+  {
+    "name": "Corde en chanvre (15 m)",
+    "name_en": "Rope, hempen",
+    "price": "1 po",
+    "weight": "5 kg"
+  },
+  {
+    "name": "Corde en soie (15 m)",
+    "name_en": "Rope, silk",
+    "price": "10 po",
+    "weight": "2,5 kg"
+  },
+  {
+    "name": "Couverture",
+    "name_en": "Blanket",
+    "price": "5 pa",
+    "weight": "1,5 kg"
+  },
+  {
+    "name": "Craie (un morceau)",
+    "name_en": "Chalk",
+    "price": "1 pc",
+    "weight": "-"
+  },
+  {
+    "name": "Cruche ou pichet",
+    "name_en": "Jug or pitcher",
+    "price": "2 pc",
+    "weight": "2 kg"
+  },
+  {
+    "name": "Eau bénite (flasque)",
+    "name_en": "Holy Water",
+    "price": "25 po",
+    "weight": "500 g"
+  },
+  {
+    "name": "Échelle (3 m)",
+    "name_en": "Ladder",
+    "price": "1 pa",
+    "weight": "12,5 kg"
+  },
+  {
+    "name": "Encre (bouteille de 30 ml)",
+    "name_en": "Ink",
+    "price": "10 po",
+    "weight": "-"
+  },
+  {
+    "name": "Étui à carreaux",
+    "name_en": "Case, Crossbow Bolt",
+    "price": "1 po",
+    "weight": "500 g"
+  },
+  {
+    "name": "Étui à cartes ou parchemins",
+    "name_en": "Case, Map or Scroll",
+    "price": "1 po",
+    "weight": "500 g"
+  },
+  {
+    "name": "Feu grégeois (flasque)",
+    "name_en": "Alchemist’s Fire",
+    "price": "50 po",
+    "weight": "500 g"
+  },
+  {
+    "name": "Fiole (10 cl)",
+    "name_en": "Vial",
+    "price": "1 po",
+    "weight": "-"
+  },
+  {
+    "name": "Flasque ou chope (50 cl)",
+    "name_en": "Flask",
+    "price": "2 pc",
+    "weight": "500 g"
+  },
+  {
+    "name": "Baguette",
+    "name_en": "Wand",
+    "price": "10 po",
+    "weight": "500 g"
+  },
+  {
+    "name": "Bâton",
+    "name_en": "Staff",
+    "price": "5 po",
+    "weight": "2 kg"
+  },
+  {
+    "name": "Boule de cristal",
+    "name_en": "Crystal",
+    "price": "10 po",
+    "weight": "500 g"
+  },
+  {
+    "name": "Orbe",
+    "name_en": "Orb",
+    "price": "20 po",
+    "weight": "1,5 kg"
+  },
+  {
+    "name": "Sceptre",
+    "name_en": "Rod",
+    "price": "10 po",
+    "weight": "1 kg"
+  },
+  {
+    "name": "Baguette d'if",
+    "name_en": "Yew wand",
+    "price": "10 po",
+    "weight": "500 g"
+  },
+  {
+    "name": "Bâton",
+    "name_en": "Wooden staff",
+    "price": "5 po",
+    "weight": "2 kg"
+  },
+  {
+    "name": "Branche de gui",
+    "name_en": "Sprig of mistletoe",
+    "price": "1 po",
+    "weight": "-"
+  },
+  {
+    "name": "Totem",
+    "name_en": "Totem",
+    "price": "1 po",
+    "weight": "-"
+  },
+  {
+    "name": "Gamelle",
+    "name_en": "Mess Kit",
+    "price": "2 pa",
+    "weight": "500 g"
+  },
+  {
+    "name": "Gourde (pleine)",
+    "name_en": "Waterskin",
+    "price": "2 pa",
+    "weight": "2,5 kg"
+  },
+  {
+    "name": "Grappin",
+    "name_en": "Grappling hook",
+    "price": "2 po",
+    "weight": "2 kg"
+  },
+  {
+    "name": "Grimoire",
+    "name_en": "Spellbook",
+    "price": "50 po",
+    "weight": "1,5 kg"
+  },
+  {
+    "name": "Huile (flasque)",
+    "name_en": "Oil",
+    "price": "1 pa",
+    "weight": "500 g"
+  },
+  {
+    "name": "Kit d’escalade",
+    "name_en": "Climber’s Kit",
+    "price": "25 po",
+    "weight": "6 kg"
+  },
+  {
+    "name": "Lampe",
+    "name_en": "Lamp",
+    "price": "5 pa",
+    "weight": "500 g"
+  },
+  {
+    "name": "Lanterne à capote",
+    "name_en": "Lantern, hooded",
+    "price": "5 po",
+    "weight": "1 kg"
+  },
+  {
+    "name": "Lanterne sourde",
+    "name_en": "Lantern, bullseye",
+    "price": "10 po",
+    "weight": "1 kg"
+  },
+  {
+    "name": "Livre",
+    "name_en": "Book",
+    "price": "25 po",
+    "weight": "2,5 kg"
+  },
+  {
+    "name": "Longue-vue",
+    "name_en": "Spyglass",
+    "price": "1000 po",
+    "weight": "500 g"
+  },
+  {
+    "name": "Loupe",
+    "name_en": "Magnifying Glass",
+    "price": "100 po",
+    "weight": "-"
+  },
+  {
+    "name": "Marteau",
+    "name_en": "Hammer",
+    "price": "1 po",
+    "weight": "1,5 kg"
+  },
+  {
+    "name": "Marteau de forgeron",
+    "name_en": "Hammer, sledge",
+    "price": "2 po",
+    "weight": "5 kg"
+  },
+  {
+    "name": "Matériel de pêche",
+    "name_en": "Fishing Tackle",
+    "price": "1 po",
+    "weight": "2 kg"
+  },
+  {
+    "name": "Menottes",
+    "name_en": "Manacles",
+    "price": "2 po",
+    "weight": "3 kg"
+  },
+  {
+    "name": "Miroir en acier",
+    "name_en": "Mirror, steel",
+    "price": "5 po",
+    "weight": "250 g"
+  },
+  {
+    "name": "Aiguilles de sarbacane (50)",
+    "name_en": "Blowgun needles",
+    "price": "1 po",
+    "weight": "500 g"
+  },
+  {
+    "name": "Billes de fronde (20)",
+    "name_en": "Sling bullets",
+    "price": "4 pc",
+    "weight": "750 g"
+  },
+  {
+    "name": "Carreaux d'arbalète (20)",
+    "name_en": "Crossbow bolts",
+    "price": "1 po",
+    "weight": "750 g"
+  },
+  {
+    "name": "Flèches (20)",
+    "name_en": "Arrows",
+    "price": "1 po",
+    "weight": "500 g"
+  },
+  {
+    "name": "Palan",
+    "name_en": "Block and tackle",
+    "price": "1 po",
+    "weight": "2,5 kg"
+  },
+  {
+    "name": "Panier",
+    "name_en": "Basket",
+    "price": "4 pa",
+    "weight": "1 kg"
+  },
+  {
+    "name": "Papier (une feuille)",
+    "name_en": "Paper",
+    "price": "2 pa",
+    "weight": "-"
+  },
+  {
+    "name": "Parchemin (une feuille)",
+    "name_en": "Parchment",
+    "price": "1 pa",
+    "weight": "-"
+  },
+  {
+    "name": "Parfum (fiole)",
+    "name_en": "Perfum",
+    "price": "5 po",
+    "weight": "-"
+  },
+  {
+    "name": "Pelle",
+    "name_en": "Shovel",
+    "price": "2 po",
+    "weight": "2,5 kg"
+  },
+  {
+    "name": "Perche (3 m)",
+    "name_en": "Pole",
+    "price": "5 pc",
+    "weight": "3,5 kg"
+  },
+  {
+    "name": "Pied-de-biche",
+    "name_en": "Crowbar",
+    "price": "2 po",
+    "weight": "2,5 kg"
+  },
+  {
+    "name": "Piège à mâchoires",
+    "name_en": "Hunting Trap",
+    "price": "5 po",
+    "weight": "12,5 kg"
+  },
+  {
+    "name": "Pierre à aiguiser",
+    "name_en": "Whetstone",
+    "price": "1 pc",
+    "weight": "500 g"
+  },
+  {
+    "name": "Pioche de mineur",
+    "name_en": "Pick, miner's",
+    "price": "2 po",
+    "weight": "5 kg"
+  },
+  {
+    "name": "Piton",
+    "name_en": "Piton",
+    "price": "5 pc",
+    "weight": "125 g"
+  },
+  {
+    "name": "Plume d’écriture",
+    "name_en": "Ink pen",
+    "price": "2 pc",
+    "weight": "-"
+  },
+  {
+    "name": "Pointes en fer (10)",
+    "name_en": "Spikes, iron",
+    "price": "1 po",
+    "weight": "2,5 kg"
+  },
+  {
+    "name": "Poison (fiole)",
+    "name_en": "Poison",
+    "price": "100 po",
+    "weight": "-"
+  },
+  {
+    "name": "Pot en fer",
+    "name_en": "Pot, iron",
+    "price": "2 po",
+    "weight": "5 kg"
+  },
+  {
+    "name": "Potion de guérison",
+    "name_en": "Potion of Healing",
+    "price": "50 po",
+    "weight": "250 g"
+  },
+  {
+    "name": "Rations (1 jour)",
+    "name_en": "Rations",
+    "price": "5 pa",
+    "weight": "1 kg"
+  },
+  {
+    "name": "Robes",
+    "name_en": "Robes",
+    "price": "1 po",
+    "weight": "2 kg"
+  },
+  {
+    "name": "Sablier",
+    "name_en": "Hourglass",
+    "price": "25 po",
+    "weight": "500 g"
+  },
+  {
+    "name": "Sac",
+    "name_en": "Sack",
+    "price": "1 pc",
+    "weight": "250 g"
+  },
+  {
+    "name": "Sac à dos",
+    "name_en": "Backpack",
+    "price": "2 po",
+    "weight": "2,5 kg"
+  },
+  {
+    "name": "Sac de couchage",
+    "name_en": "Bedroll",
+    "price": "1 po",
+    "weight": "3,5 kg"
+  },
+  {
+    "name": "Sacoche",
+    "name_en": "Pouch",
+    "price": "5 pa",
+    "weight": "500 g"
+  },
+  {
+    "name": "Sacoche à composantes",
+    "name_en": "Component Pouch",
+    "price": "25 po",
+    "weight": "1 kg"
+  },
+  {
+    "name": "Savon",
+    "name_en": "Soap",
+    "price": "2 pc",
+    "weight": "-"
+  },
+  {
+    "name": "Seau",
+    "name_en": "Bucket",
+    "price": "5 pc",
+    "weight": "1 kg"
+  },
+  {
+    "name": "Sifflet",
+    "name_en": "Signal whistle",
+    "price": "5 pc",
+    "weight": "-"
+  },
+  {
+    "name": "Amulette",
+    "name_en": "Amulet",
+    "price": "5 po",
+    "weight": "500 g"
+  },
+  {
+    "name": "Emblème",
+    "name_en": "Emblem",
+    "price": "5 po",
+    "weight": "-"
+  },
+  {
+    "name": "Reliquaire",
+    "name_en": "Reliquary",
+    "price": "5 po",
+    "weight": "1 kg"
+  },
+  {
+    "name": "Tente",
+    "name_en": "Tent",
+    "price": "2 po",
+    "weight": "10 kg"
+  },
+  {
+    "name": "Tonneau",
+    "name_en": "Barrel",
+    "price": "2 po",
+    "weight": "35 kg"
+  },
+  {
+    "name": "Torche",
+    "name_en": "Torch",
+    "price": "1 pc",
+    "weight": "500 g"
+  },
+  {
+    "name": "Trousse de soins",
+    "name_en": "Healer’s Kit",
+    "price": "5 po",
+    "weight": "1,5 kg"
+  },
+  {
+    "name": "Vêtements, communs",
+    "name_en": "Clothes, common",
+    "price": "5 pa",
+    "weight": "1,5 kg"
+  },
+  {
+    "name": "Vêtements, costume",
+    "name_en": "Clothes, costume",
+    "price": "5 po",
+    "weight": "2 kg"
+  },
+  {
+    "name": "Vêtements, fins",
+    "name_en": "Clothes, fine",
+    "price": "15 po",
+    "weight": "3 kg"
+  },
+  {
+    "name": "Vêtements, voyage",
+    "name_en": "Clothes, traveler’s",
+    "price": "2 po",
+    "weight": "2 kg"
+  }
+]

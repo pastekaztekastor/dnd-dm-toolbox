@@ -90,61 +90,60 @@ void CharacterCreatorWindow::RenderRaceClass() {
         helpWindow->ShowHelpMarker("race_general");
     }
 
-    auto races = DnD::CharacterHelper::GetAllRaces();
-    static const std::map<DnD::Race, std::string> raceHelpKeys = {
-        {DnD::Race::Human, "race_human"},
-        {DnD::Race::Elf, "race_elf"},
-        {DnD::Race::Dwarf, "race_dwarf"},
-        {DnD::Race::Halfling, "race_halfling"},
-        {DnD::Race::Dragonborn, "race_dragonborn"},
-        {DnD::Race::Gnome, "race_gnome"},
-        {DnD::Race::HalfElf, "race_halfelf"},
-        {DnD::Race::HalfOrc, "race_halforc"},
-        {DnD::Race::Tiefling, "race_tiefling"}
-    };
+    // Utiliser les données de la DB si disponibles, sinon fallback sur enums
+    if (!dbRaces.empty()) {
+        // VERSION DB: Affichage dynamique depuis PostgreSQL
+        std::string racePreview = selectedRace < static_cast<int>(dbRaces.size())
+            ? FormatRaceLabel(dbRaces[selectedRace])
+            : "Sélectionner une race";
 
-    // Créer les labels pour le combo avec bonus de stats
-    static const std::map<DnD::Race, std::string> raceBonuses = {
-        {DnD::Race::Human, "Humain (+1 à toutes)"},
-        {DnD::Race::Elf, "Elfe (+2 DEX)"},
-        {DnD::Race::Dwarf, "Nain (+2 CON)"},
-        {DnD::Race::Halfling, "Halfelin (+2 DEX)"},
-        {DnD::Race::Dragonborn, "Drakéide (+2 FOR, +1 CHA)"},
-        {DnD::Race::Gnome, "Gnome (+2 INT)"},
-        {DnD::Race::HalfElf, "Demi-Elfe (+2 CHA, +1 à 2 autres)"},
-        {DnD::Race::HalfOrc, "Demi-Orc (+2 FOR, +1 CON)"},
-        {DnD::Race::Tiefling, "Tieffelin (+2 CHA, +1 INT)"}
-    };
+        if (ImGui::BeginCombo("##RaceCombo", racePreview.c_str())) {
+            for (size_t i = 0; i < dbRaces.size(); ++i) {
+                const bool isSelected = (selectedRace == static_cast<int>(i));
+                std::string label = FormatRaceLabel(dbRaces[i]);
 
-    // Construire le preview du combo
-    const char* racePreview = raceBonuses.at(races[selectedRace]).c_str();
+                if (ImGui::Selectable(label.c_str(), isSelected)) {
+                    selectedRace = i;
+                    // TODO: Stocker l'ID de la race dans character
+                    character->speed = dbRaces[i].base_speed;
+                }
 
-    if (ImGui::BeginCombo("##RaceCombo", racePreview)) {
-        for (size_t i = 0; i < races.size(); ++i) {
-            const bool isSelected = (selectedRace == static_cast<int>(i));
-            if (ImGui::Selectable(raceBonuses.at(races[i]).c_str(), isSelected)) {
-                selectedRace = i;
-                character->race = races[i];
-                character->speed = DnD::CharacterHelper::GetRacialSpeed(races[i]);
+                // Afficher la description au survol
+                if (ImGui::IsItemHovered() && !dbRaces[i].description.empty()) {
+                    ImGui::SetTooltip("%s", dbRaces[i].description.c_str());
+                }
+
+                if (isSelected) {
+                    ImGui::SetItemDefaultFocus();
+                }
             }
+            ImGui::EndCombo();
+        }
 
-            // Afficher l'aide contextuelle au survol
-            if (helpWindow && ImGui::IsItemHovered()) {
-                helpWindow->SetHelp(raceHelpKeys.at(races[i]));
-            }
+        // Afficher les détails de la race sélectionnée
+        if (selectedRace >= 0 && selectedRace < static_cast<int>(dbRaces.size())) {
+            ImGui::Spacing();
+            const auto& race = dbRaces[selectedRace];
+            ImGui::TextWrapped("Vitesse : %d pieds", race.base_speed);
+            ImGui::TextWrapped("Taille : %s", race.size.c_str());
 
-            // Set the initial focus when opening the combo
-            if (isSelected) {
-                ImGui::SetItemDefaultFocus();
+            if (!race.languages.empty()) {
+                ImGui::Text("Langues : ");
+                ImGui::SameLine();
+                for (size_t i = 0; i < race.languages.size(); ++i) {
+                    if (i > 0) ImGui::SameLine(0, 0); ImGui::Text(", ");
+                    if (i > 0) ImGui::SameLine();
+                    ImGui::Text("%s", race.languages[i].c_str());
+                }
             }
         }
-        ImGui::EndCombo();
-    }
-
-    // Afficher l'aide de la race sélectionnée en dessous
-    if (helpWindow && selectedRace >= 0 && selectedRace < static_cast<int>(races.size())) {
-        ImGui::Spacing();
-        ImGui::TextWrapped("Vitesse : %d pieds", DnD::CharacterHelper::GetRacialSpeed(races[selectedRace]));
+    } else {
+        // FALLBACK: Version hardcodée si DB non disponible
+        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "⚠ Base de données non connectée");
+        auto races = DnD::CharacterHelper::GetAllRaces();
+        if (selectedRace >= 0 && selectedRace < static_cast<int>(races.size())) {
+            ImGui::Text("Race : %s", DnD::CharacterHelper::RaceToString(races[selectedRace]).c_str());
+        }
     }
 
     ImGui::Spacing();
@@ -158,92 +157,59 @@ void CharacterCreatorWindow::RenderRaceClass() {
         helpWindow->ShowHelpMarker("class_general");
     }
 
-    auto classes = DnD::CharacterHelper::GetAllClasses();
-    static const std::map<DnD::CharacterClass, std::string> classHelpKeys = {
-        {DnD::CharacterClass::Barbarian, "class_barbarian"},
-        {DnD::CharacterClass::Bard, "class_bard"},
-        {DnD::CharacterClass::Cleric, "class_cleric"},
-        {DnD::CharacterClass::Druid, "class_druid"},
-        {DnD::CharacterClass::Fighter, "class_fighter"},
-        {DnD::CharacterClass::Monk, "class_monk"},
-        {DnD::CharacterClass::Paladin, "class_paladin"},
-        {DnD::CharacterClass::Ranger, "class_ranger"},
-        {DnD::CharacterClass::Rogue, "class_rogue"},
-        {DnD::CharacterClass::Sorcerer, "class_sorcerer"},
-        {DnD::CharacterClass::Warlock, "class_warlock"},
-        {DnD::CharacterClass::Wizard, "class_wizard"}
-    };
+    // Utiliser les données de la DB si disponibles
+    if (!dbClasses.empty()) {
+        // VERSION DB: Affichage dynamique depuis PostgreSQL
+        std::string classPreview = selectedClass < static_cast<int>(dbClasses.size())
+            ? FormatClassLabel(dbClasses[selectedClass])
+            : "Sélectionner une classe";
 
-    // Créer les labels pour le combo avec dé de vie et rôle
-    static const std::map<DnD::CharacterClass, std::string> classInfos = {
-        {DnD::CharacterClass::Barbarian, "Barbare (DV: d12, Tank/DPS)"},
-        {DnD::CharacterClass::Bard, "Barde (DV: d8, Support/Utility)"},
-        {DnD::CharacterClass::Cleric, "Clerc (DV: d8, Heal/Support)"},
-        {DnD::CharacterClass::Druid, "Druide (DV: d8, Support/Tank)"},
-        {DnD::CharacterClass::Fighter, "Guerrier (DV: d10, Tank/DPS)"},
-        {DnD::CharacterClass::Monk, "Moine (DV: d8, DPS/Mobility)"},
-        {DnD::CharacterClass::Paladin, "Paladin (DV: d10, Tank/Heal)"},
-        {DnD::CharacterClass::Ranger, "Rôdeur (DV: d10, DPS/Utility)"},
-        {DnD::CharacterClass::Rogue, "Roublard (DV: d8, DPS/Skill)"},
-        {DnD::CharacterClass::Sorcerer, "Ensorceleur (DV: d6, DPS/Blast)"},
-        {DnD::CharacterClass::Warlock, "Sorcier (DV: d8, DPS/Utility)"},
-        {DnD::CharacterClass::Wizard, "Magicien (DV: d6, Control/Utility)"}
-    };
+        if (ImGui::BeginCombo("##ClassCombo", classPreview.c_str())) {
+            for (size_t i = 0; i < dbClasses.size(); ++i) {
+                const bool isSelected = (selectedClass == static_cast<int>(i));
+                std::string label = FormatClassLabel(dbClasses[i]);
 
-    // Construire le preview du combo
-    const char* classPreview = classInfos.at(classes[selectedClass]).c_str();
+                if (ImGui::Selectable(label.c_str(), isSelected)) {
+                    selectedClass = i;
+                    // TODO: Stocker l'ID de la classe dans character
+                    // TODO: Charger les saving throw proficiencies depuis la DB
+                }
 
-    if (ImGui::BeginCombo("##ClassCombo", classPreview)) {
-        for (size_t i = 0; i < classes.size(); ++i) {
-            const bool isSelected = (selectedClass == static_cast<int>(i));
-            if (ImGui::Selectable(classInfos.at(classes[i]).c_str(), isSelected)) {
-                selectedClass = i;
-                character->characterClass = classes[i];
+                // Afficher la description au survol
+                if (ImGui::IsItemHovered() && !dbClasses[i].description.empty()) {
+                    ImGui::SetTooltip("%s", dbClasses[i].description.c_str());
+                }
 
-                // Set class-based proficiencies
-                // This is simplified - real implementation would need full class data
-                switch (classes[i]) {
-                    case DnD::CharacterClass::Fighter:
-                        character->savingThrowProficiencies[DnD::Ability::Strength] = true;
-                        character->savingThrowProficiencies[DnD::Ability::Constitution] = true;
-                        break;
-                    case DnD::CharacterClass::Wizard:
-                        character->savingThrowProficiencies[DnD::Ability::Intelligence] = true;
-                        character->savingThrowProficiencies[DnD::Ability::Wisdom] = true;
-                        break;
-                    case DnD::CharacterClass::Rogue:
-                        character->savingThrowProficiencies[DnD::Ability::Dexterity] = true;
-                        character->savingThrowProficiencies[DnD::Ability::Intelligence] = true;
-                        break;
-                    case DnD::CharacterClass::Cleric:
-                        character->savingThrowProficiencies[DnD::Ability::Wisdom] = true;
-                        character->savingThrowProficiencies[DnD::Ability::Charisma] = true;
-                        break;
-                    default:
-                        break;
+                if (isSelected) {
+                    ImGui::SetItemDefaultFocus();
                 }
             }
+            ImGui::EndCombo();
+        }
 
-            // Afficher l'aide contextuelle au survol
-            if (helpWindow && ImGui::IsItemHovered()) {
-                helpWindow->SetHelp(classHelpKeys.at(classes[i]));
+        // Afficher des infos sur la classe sélectionnée
+        if (selectedClass >= 0 && selectedClass < static_cast<int>(dbClasses.size())) {
+            ImGui::Spacing();
+            const auto& cls = dbClasses[selectedClass];
+            ImGui::TextWrapped("Dé de vie : d%d | Compétences à choisir : %d",
+                cls.hit_die,
+                cls.skill_choices);
+
+            if (!cls.primary_ability.empty()) {
+                ImGui::TextWrapped("Caractéristique principale : %s", cls.primary_ability.c_str());
             }
 
-            // Set the initial focus when opening the combo
-            if (isSelected) {
-                ImGui::SetItemDefaultFocus();
+            if (!cls.available_skills.empty()) {
+                ImGui::Text("Compétences disponibles : %zu", cls.available_skills.size());
             }
         }
-        ImGui::EndCombo();
-    }
-
-    // Afficher des infos sur la classe sélectionnée
-    if (selectedClass >= 0 && selectedClass < static_cast<int>(classes.size())) {
-        ImGui::Spacing();
-        int hitDie = DnD::CharacterHelper::GetHitDie(classes[selectedClass]);
-        ImGui::TextWrapped("Dé de vie : d%d | Compétences à choisir : %d",
-            hitDie,
-            DnD::CharacterHelper::GetSkillChoices(classes[selectedClass]));
+    } else {
+        // FALLBACK: Version hardcodée si DB non disponible
+        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "⚠ Base de données non connectée");
+        auto classes = DnD::CharacterHelper::GetAllClasses();
+        if (selectedClass >= 0 && selectedClass < static_cast<int>(classes.size())) {
+            ImGui::Text("Classe : %s", DnD::CharacterHelper::ClassToString(classes[selectedClass]).c_str());
+        }
     }
 
     ImGui::Spacing();

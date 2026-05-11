@@ -2,6 +2,7 @@
 
 #include "../dnd/Character.h"
 #include "../dnd/Dice.h"
+#include "../database/DatabaseManager.h"
 #include <memory>
 #include <vector>
 
@@ -16,10 +17,15 @@ private:
     std::shared_ptr<DnD::Character> character;
     DiceRollerWindow* diceRoller; // Pointer to the global dice roller
     ContextualHelpWindow* helpWindow; // Pointer to the help window
+    std::shared_ptr<Database::DatabaseManager> database; // Database connection
     bool isOpen;
 
+    // Données chargées depuis la DB
+    std::vector<Database::RaceData> dbRaces;
+    std::vector<Database::ClassData> dbClasses;
+
     // Character creation state
-    int creationStep; // 0 = basic info, 1 = race/class, 2 = abilities, 3 = skills, 4 = review
+    int creationStep; // 0 = basic info, 1 = race, 2 = class, 3 = abilities, 4 = skills, 5 = review
 
     // Ability score generation
     enum class AbilityMethod {
@@ -56,11 +62,42 @@ private:
         return total;
     }
 
+    // Formater l'affichage d'une race avec ses bonus
+    std::string FormatRaceLabel(const Database::RaceData& race) const {
+        std::string label = race.name_fr;
+        std::vector<std::string> bonuses;
+
+        if (race.str_bonus > 0) bonuses.push_back("+" + std::to_string(race.str_bonus) + " FOR");
+        if (race.dex_bonus > 0) bonuses.push_back("+" + std::to_string(race.dex_bonus) + " DEX");
+        if (race.con_bonus > 0) bonuses.push_back("+" + std::to_string(race.con_bonus) + " CON");
+        if (race.int_bonus > 0) bonuses.push_back("+" + std::to_string(race.int_bonus) + " INT");
+        if (race.wis_bonus > 0) bonuses.push_back("+" + std::to_string(race.wis_bonus) + " SAG");
+        if (race.cha_bonus > 0) bonuses.push_back("+" + std::to_string(race.cha_bonus) + " CHA");
+
+        if (!bonuses.empty()) {
+            label += " (";
+            for (size_t i = 0; i < bonuses.size(); ++i) {
+                if (i > 0) label += ", ";
+                label += bonuses[i];
+            }
+            label += ")";
+        }
+
+        return label;
+    }
+
+    // Formater l'affichage d'une classe avec son dé de vie
+    std::string FormatClassLabel(const Database::ClassData& cls) const {
+        return cls.name_fr + " (DV: d" + std::to_string(cls.hit_die) +
+               ", " + std::to_string(cls.skill_choices) + " compétences)";
+    }
+
 public:
     CharacterCreatorWindow()
         : character(std::make_shared<DnD::Character>())
         , diceRoller(nullptr)
         , helpWindow(nullptr)
+        , database(std::make_shared<Database::DatabaseManager>())
         , isOpen(false)
         , creationStep(0)
         , abilityMethod(AbilityMethod::PointBuy)
@@ -71,6 +108,13 @@ public:
     {
         nameBuffer[0] = '\0';
         backgroundBuffer[0] = '\0';
+
+        // Connexion à la base de données avec les credentials du docker-compose
+        if (database->Connect("localhost", "5432", "dnd_toolbox", "dnduser", "dndpass")) {
+            // Charger les races et classes depuis la DB
+            dbRaces = database->LoadRaces();
+            dbClasses = database->LoadClasses();
+        }
     }
 
     void SetDiceRoller(DiceRollerWindow* roller) { diceRoller = roller; }
@@ -92,7 +136,7 @@ public:
 
 private:
     void RenderBasicInfo();
-    void RenderRaceClass();
+    void RenderRaceClass();  // Étape 1 : Race et Classe ensemble (pour l'instant)
     void RenderAbilities();
     void RenderSkills();
     void RenderReview();
