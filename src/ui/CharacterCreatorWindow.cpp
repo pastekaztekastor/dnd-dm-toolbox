@@ -105,7 +105,7 @@ void CharacterCreatorWindow::RenderRaceClass() {
                 if (ImGui::Selectable(label.c_str(), isSelected)) {
                     selectedRace = i;
                     // TODO: Stocker l'ID de la race dans character
-                    character->speed = dbRaces[i].base_speed;
+                    character->speed = dbRaces[i].vitesse_base;
                 }
 
                 // Afficher la description au survol
@@ -124,18 +124,7 @@ void CharacterCreatorWindow::RenderRaceClass() {
         if (selectedRace >= 0 && selectedRace < static_cast<int>(dbRaces.size())) {
             ImGui::Spacing();
             const auto& race = dbRaces[selectedRace];
-            ImGui::TextWrapped("Vitesse : %d pieds", race.base_speed);
-            ImGui::TextWrapped("Taille : %s", race.size.c_str());
-
-            if (!race.languages.empty()) {
-                ImGui::Text("Langues : ");
-                ImGui::SameLine();
-                for (size_t i = 0; i < race.languages.size(); ++i) {
-                    if (i > 0) ImGui::SameLine(0, 0); ImGui::Text(", ");
-                    if (i > 0) ImGui::SameLine();
-                    ImGui::Text("%s", race.languages[i].c_str());
-                }
-            }
+            ImGui::TextWrapped("Vitesse : %d pieds", race.vitesse_base);
         }
     } else {
         // FALLBACK: Version hardcodée si DB non disponible

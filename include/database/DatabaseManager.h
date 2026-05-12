@@ -8,30 +8,41 @@
 
 namespace Database {
 
+struct RacePresentation {
+    std::string titre;
+    std::string texte;
+};
+
+struct RaceTrait {
+    std::string titre;
+    std::string texte;
+};
+
+struct RaceNom {
+    std::string titre;
+    std::string texte;
+};
+
 // Structure pour représenter une race
 struct RaceData {
     std::string id;
-    std::string name;
-    std::string name_fr;
+    std::string race_parent_id; // vide si race parente
+    std::string nom;
+    std::string alias;
     std::string description;
-    int str_bonus = 0;
-    int dex_bonus = 0;
-    int con_bonus = 0;
-    int int_bonus = 0;
-    int wis_bonus = 0;
-    int cha_bonus = 0;
-    int base_speed = 30;
-    std::string size;
-    std::vector<std::string> languages;
-    std::vector<std::string> traits; // Noms des traits raciaux
-};
-
-// Structure pour représenter un trait racial
-struct RacialTrait {
-    std::string name;
-    std::string name_fr;
-    std::string description;
-    std::string trait_type; // passive, active
+    std::string aide_joueur;
+    int bonus_forces       = 0;
+    int bonus_dexterite    = 0;
+    int bonus_constitution = 0;
+    int bonus_intelligence = 0;
+    int bonus_sagesse      = 0;
+    int bonus_charisme     = 0;
+    int vitesse_base = 30;
+    std::string liste_langues;
+    std::string image_path;
+    std::vector<RacePresentation> presentations;
+    std::vector<RaceTrait>        race_traits;
+    std::vector<RaceNom>          noms;
 };
 
 // Structure pour représenter une classe
@@ -65,7 +76,6 @@ private:
     // Cache
     std::vector<RaceData> racesCache;
     std::vector<ClassData> classesCache;
-    std::map<std::string, std::vector<RacialTrait>> racialTraitsCache;
     std::map<std::string, std::vector<ClassFeature>> classFeaturesCache;
     bool cacheLoaded;
 
@@ -85,7 +95,6 @@ public:
     // Chargement des données
     std::vector<RaceData> LoadRaces();
     std::vector<ClassData> LoadClasses();
-    std::vector<RacialTrait> LoadRacialTraits(const std::string& raceId);
     std::vector<ClassFeature> LoadClassFeatures(const std::string& classId, int level = 1);
 
     // Helpers
@@ -93,10 +102,13 @@ public:
 
 private:
     void LoadCache();
-    std::vector<RaceData> ParseRaces(PGresult* result);
-    std::vector<ClassData> ParseClasses(PGresult* result);
-    std::vector<RacialTrait> ParseRacialTraits(PGresult* result);
+    std::vector<RaceData>    ParseRaces(PGresult* result);
+    std::vector<ClassData>   ParseClasses(PGresult* result);
     std::vector<ClassFeature> ParseClassFeatures(PGresult* result);
+
+    void LoadRacePresentations(RaceData& race);
+    void LoadRaceTraitsData(RaceData& race);
+    void LoadRaceNoms(RaceData& race);
 };
 
 } // namespace Database

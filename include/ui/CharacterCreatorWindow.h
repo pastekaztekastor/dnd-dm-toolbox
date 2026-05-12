@@ -64,15 +64,15 @@ private:
 
     // Formater l'affichage d'une race avec ses bonus
     std::string FormatRaceLabel(const Database::RaceData& race) const {
-        std::string label = race.name_fr;
+        std::string label = race.nom;
         std::vector<std::string> bonuses;
 
-        if (race.str_bonus > 0) bonuses.push_back("+" + std::to_string(race.str_bonus) + " FOR");
-        if (race.dex_bonus > 0) bonuses.push_back("+" + std::to_string(race.dex_bonus) + " DEX");
-        if (race.con_bonus > 0) bonuses.push_back("+" + std::to_string(race.con_bonus) + " CON");
-        if (race.int_bonus > 0) bonuses.push_back("+" + std::to_string(race.int_bonus) + " INT");
-        if (race.wis_bonus > 0) bonuses.push_back("+" + std::to_string(race.wis_bonus) + " SAG");
-        if (race.cha_bonus > 0) bonuses.push_back("+" + std::to_string(race.cha_bonus) + " CHA");
+        if (race.bonus_forces       > 0) bonuses.push_back("+" + std::to_string(race.bonus_forces)       + " FOR");
+        if (race.bonus_dexterite    > 0) bonuses.push_back("+" + std::to_string(race.bonus_dexterite)    + " DEX");
+        if (race.bonus_constitution > 0) bonuses.push_back("+" + std::to_string(race.bonus_constitution) + " CON");
+        if (race.bonus_intelligence > 0) bonuses.push_back("+" + std::to_string(race.bonus_intelligence) + " INT");
+        if (race.bonus_sagesse      > 0) bonuses.push_back("+" + std::to_string(race.bonus_sagesse)      + " SAG");
+        if (race.bonus_charisme     > 0) bonuses.push_back("+" + std::to_string(race.bonus_charisme)     + " CHA");
 
         if (!bonuses.empty()) {
             label += " (";

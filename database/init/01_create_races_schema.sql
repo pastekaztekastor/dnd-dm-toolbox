@@ -7,94 +7,89 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================================================
--- TABLE: RACE (nouvelle version)
--- Structure complète pour les races avec toutes les métadonnées
+-- TABLE: RACES
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS races (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), 
     nom VARCHAR(100) NOT NULL UNIQUE,
-    race_parent_id UUID REFERENCES races(id), -- NULL si race parente, sinon référence
-
+    race_parent_id UUID REFERENCES races(id) DEFAULT NULL, -- NULL si race parente, sinon référence
+    alias VARCHAR(100) DEFAULT '', -- Nom alternatif pour pseudo markdown CamelCase du nom (ex: "HalfElf" pour "Half-Elf")
     -- Description générale
     description TEXT,
     aide_joueur TEXT, -- Conseils pour les joueurs
 
-    -- Présentation paragraphe
-    pres_1_titre VARCHAR(100),
-    pres_1_texte TEXT,
-    pres_2_titre VARCHAR(100),
-    pres_2_texte TEXT,
-    pres_3_titre VARCHAR(100),
-    pres_3_texte TEXT,
-    pres_4_titre VARCHAR(100),
-    pres_4_texte TEXT,
-    pres_5_titre VARCHAR(100),
-    pres_5_texte TEXT,
-    pres_6_titre VARCHAR(100),
-    pres_6_texte TEXT,
-    pres_7_titre VARCHAR(100),
-    pres_7_texte TEXT,
-    pres_8_titre VARCHAR(100),
-    pres_8_texte TEXT,
-    pres_9_titre VARCHAR(100),
-    pres_9_texte TEXT,
-    pres_10_titre VARCHAR(100),
-    pres_10_texte TEXT,
-
-    -- Noms de personnages
-    pres_nom_titre VARCHAR(100),
-    pres_nom_texte TEXT,
-    nom_1_titre VARCHAR(100),
-    nom_1-texte TEXT, -- Exemples séparés par virgules
-    nom_2_titre VARCHAR(100),
-    nom_2-texte TEXT,
-    nom_3_titre VARCHAR(100),
-    nom_3-texte TEXT,
-    nom_4_titre VARCHAR(100),
-    nom_4-texte TEXT,
-
-    -- Traits raciaux
-
-    bonus_forces INTEGER DEFAULT 0,
-    bonus_charisme INTEGER DEFAULT 0,
-    bonus_dexterite INTEGER DEFAULT 0,
+    -- Traits raciaux — bonus de caractéristiques
+    bonus_forces       INTEGER DEFAULT 0,
+    bonus_charisme     INTEGER DEFAULT 0,
+    bonus_dexterite    INTEGER DEFAULT 0,
     bonus_constitution INTEGER DEFAULT 0,
     bonus_intelligence INTEGER DEFAULT 0,
-    bonus_sagesse INTEGER DEFAULT 0,
-    age_adulte INTEGER,
-    age_max INTEGER,
-    taille_min INTEGER,
-    taille_max INTEGER,
-    vitesse_base INTEGER DEFAULT 30,
+    bonus_sagesse      INTEGER DEFAULT 0,
 
-    trait_1_titre VARCHAR(100),
-    trait_1_texte TEXT,
-    trait_2_titre VARCHAR(100),
-    trait_2_texte TEXT, 
-    trait_3_titre VARCHAR(100),
-    trait_3_texte TEXT,
-    trait_4_titre VARCHAR(100),
-    trait_4_texte TEXT,
-    trait_5_titre VARCHAR(100),
-    trait_5_texte TEXT,
-    trait_6_titre VARCHAR(100),
-    trait_6_texte TEXT,
-    trait_7_titre VARCHAR(100),
-    trait_7_texte TEXT,
-    trait_8_titre VARCHAR(100),
-    trait_8_texte TEXT,
-    trait_9_titre VARCHAR(100),
-    trait_9_texte TEXT,
-    trait_10_titre VARCHAR(100),
-    trait_10_texte TEXT,
+    -- Âge
+    age_adulte         INTEGER DEFAULT 0,
+    age_max            INTEGER DEFAULT 0,
 
-    -- Sortilèges raciaux
-    liste_sortileges REFERENCES sortileges(id), -- Référence à une table de sortilèges
-    liste_equipement REFERENCES equipement(id), -- Référence à une table d'équipement
-    --TODO : Ajouter les tables de sortilèges et d'équipement avec les champs nécessaires pour les lier correctement
+    -- Taille
+    taille_min         INTEGER DEFAULT 0,
+    taille_max         INTEGER DEFAULT 0,
+    taille_base        INTEGER DEFAULT 0,
+    taille_facteur     INTEGER DEFAULT 0,  -- Facteur pour calculer la taille à partir de taille_base + dee_de_mod
+    dee_de_mod         VARCHAR(20) DEFAULT '1D2', -- Ex: "2D10"
+
+    -- Poids
+    poids_base         INTEGER DEFAULT 0,
+    poids_facteur      INTEGER DEFAULT 0, -- Facteur pour calculer le poids à partir de poids_base
+
+    -- Vitesse
+    vitesse_base       INTEGER DEFAULT 30,
+
+    -- Sortilèges & équipement raciaux
+    liste_langues    TEXT                          , -- Noms des langues connues (ex: "Commun, Elfe, Nain")
+    liste_sortileges UUID[] DEFAULT ARRAY[]::UUID[], -- IDs vers la table sortileges (TODO: migrer vers table de liaison)
+    liste_equipement UUID[] DEFAULT ARRAY[]::UUID[], -- IDs vers la table equipement  (TODO: migrer vers table de liaison)
+
+    -- Image
+    image_path TEXT DEFAULT 'placeholder.png',
 
     -- Méta
-    source VARCHAR(100) DEFAULT 'Player Handbook',
+    source     VARCHAR(100) DEFAULT 'Player Handbook',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================================================
+-- TABLE: RACE_PRESENTATIONS
+-- Paragraphes de présentation d'une race (remplace pres_1..10)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS race_presentations (
+    id      UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    race_id UUID NOT NULL REFERENCES races(id) ON DELETE CASCADE,
+    ordre   INTEGER NOT NULL DEFAULT -1, -- Ordre d'affichage
+    titre   VARCHAR(100)     DEFAULT '', -- Ex: "Apparence", "Société", "Relations avec
+    texte   TEXT             DEFAULT ''  -- Texte de présentation
+);
+
+-- ============================================================================
+-- TABLE: RACE_TRAITS
+-- Traits raciaux d'une race (remplace trait_1..10)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS race_traits (
+    id      UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    race_id UUID NOT NULL REFERENCES races(id) ON DELETE CASCADE,
+    ordre   INTEGER NOT NULL DEFAULT -1, -- Ordre d'affichage
+    titre   VARCHAR(100)     DEFAULT '', -- Ex: "Apparence", "Société", "Relations avec"
+    texte   TEXT             DEFAULT ''  -- Texte de présentation
+);
+
+-- ============================================================================
+-- TABLE: RACE_NOMS
+-- Sections de noms de personnages d'une race (remplace pres_nom + nom_1..4)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS race_noms (
+    id      UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    race_id UUID NOT NULL REFERENCES races(id) ON DELETE CASCADE,
+    ordre   INTEGER NOT NULL DEFAULT -1, -- Ordre d'affichage
+    titre   VARCHAR(100)     DEFAULT '', -- Ex: "Prénoms masculins", "Noms de famille"
+    texte   TEXT             DEFAULT ''  -- Exemples séparés par virgules
 );

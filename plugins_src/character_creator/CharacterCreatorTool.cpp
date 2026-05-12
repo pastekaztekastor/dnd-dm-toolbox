@@ -257,7 +257,7 @@ void CharacterCreatorTool::RenderRaceGrid() {
 
         // Nom de la race (centré et en gras)
         ImGui::PushFont(ImGui::GetFont());  // TODO: utiliser une police plus grande
-        ImGui::Text("%s", race.name_fr.c_str());
+        ImGui::Text("%s", race.nom.c_str());
         ImGui::PopFont();
 
         ImGui::Separator();
@@ -292,8 +292,8 @@ void CharacterCreatorTool::RenderRaceDetails() {
         return;
     }
 
-    ImGui::Text("Race: %s", selectedRace.name_fr.c_str());
-    ImGui::Separator();
+    ImGui::Text("Race: %s", selectedRace.nom.c_str());
+ImGui::Separator();
 
     // Description longue (scrollable)
     ImGui::BeginChild("RaceDescription", ImVec2(0, 300), true);
@@ -306,29 +306,19 @@ void CharacterCreatorTool::RenderRaceDetails() {
 
     // Bonus de caractéristiques
     ImGui::Text("Bonus de Caracteristiques:");
-    if (selectedRace.str_bonus > 0) ImGui::BulletText("Force: +%d", selectedRace.str_bonus);
-    if (selectedRace.dex_bonus > 0) ImGui::BulletText("Dexterite: +%d", selectedRace.dex_bonus);
-    if (selectedRace.con_bonus > 0) ImGui::BulletText("Constitution: +%d", selectedRace.con_bonus);
-    if (selectedRace.int_bonus > 0) ImGui::BulletText("Intelligence: +%d", selectedRace.int_bonus);
-    if (selectedRace.wis_bonus > 0) ImGui::BulletText("Sagesse: +%d", selectedRace.wis_bonus);
-    if (selectedRace.cha_bonus > 0) ImGui::BulletText("Charisme: +%d", selectedRace.cha_bonus);
+    if (selectedRace.bonus_forces       > 0) ImGui::BulletText("Force: +%d",        selectedRace.bonus_forces);
+    if (selectedRace.bonus_dexterite    > 0) ImGui::BulletText("Dextérité: +%d",    selectedRace.bonus_dexterite);
+    if (selectedRace.bonus_constitution > 0) ImGui::BulletText("Constitution: +%d", selectedRace.bonus_constitution);
+    if (selectedRace.bonus_intelligence > 0) ImGui::BulletText("Intelligence: +%d", selectedRace.bonus_intelligence);
+    if (selectedRace.bonus_sagesse      > 0) ImGui::BulletText("Sagesse: +%d",      selectedRace.bonus_sagesse);
+    if (selectedRace.bonus_charisme     > 0) ImGui::BulletText("Charisme: +%d",     selectedRace.bonus_charisme);
 
     ImGui::Spacing();
 
     // Autres infos
-    ImGui::Text("Vitesse: %d ft", selectedRace.base_speed);
-    ImGui::Text("Taille: %s", selectedRace.size.c_str());
-
-    ImGui::Spacing();
-
-    // Langues
-    if (!selectedRace.languages.empty()) {
-        ImGui::Text("Langues:");
-        for (const auto& lang : selectedRace.languages) {
-            ImGui::BulletText("%s", lang.c_str());
-        }
-        ImGui::Spacing();
-    }
+    ImGui::Text("Vitesse: %d pieds", selectedRace.vitesse_base);
+    if (!selectedRace.liste_langues.empty())
+        ImGui::Text("Langues: %s", selectedRace.liste_langues.c_str());
 
     // TODO: Variantes raciales (boutons radio)
     // TODO: Traits raciaux

@@ -71,11 +71,6 @@ void DatabaseManager::LoadCache() {
     racesCache = LoadRaces();
     classesCache = LoadClasses();
 
-    // Charger les traits pour chaque race
-    for (const auto& race : racesCache) {
-        racialTraitsCache[race.id] = LoadRacialTraits(race.id);
-    }
-
     // Charger les features de niveau 1 pour chaque classe
     for (const auto& cls : classesCache) {
         classFeaturesCache[cls.id] = LoadClassFeatures(cls.id, 1);
@@ -88,13 +83,14 @@ std::vector<RaceData> DatabaseManager::LoadRaces() {
     if (!connected) return {};
 
     const char* query = R"(
-        SELECT id, name, name_fr, description,
-               COALESCE(str_bonus, 0), COALESCE(dex_bonus, 0),
-               COALESCE(con_bonus, 0), COALESCE(int_bonus, 0),
-               COALESCE(wis_bonus, 0), COALESCE(cha_bonus, 0),
-               base_speed, size, languages
+        SELECT id, COALESCE(race_parent_id::text, ''), nom,
+               COALESCE(alias, ''), COALESCE(description, ''), COALESCE(aide_joueur, ''),
+               COALESCE(bonus_forces, 0), COALESCE(bonus_dexterite, 0),
+               COALESCE(bonus_constitution, 0), COALESCE(bonus_intelligence, 0),
+               COALESCE(bonus_sagesse, 0), COALESCE(bonus_charisme, 0),
+               COALESCE(vitesse_base, 30), COALESCE(liste_langues, ''), COALESCE(image_path, '')
         FROM races
-        ORDER BY name_fr
+        ORDER BY race_parent_id NULLS FIRST, nom
     )";
 
     PGresult* result = PQexec(connection, query);
@@ -109,7 +105,13 @@ std::vector<RaceData> DatabaseManager::LoadRaces() {
     auto races = ParseRaces(result);
     PQclear(result);
 
-    std::cout << "" << races.size() << " races chargées depuis la DB" << std::endl;
+    for (auto& race : races) {
+        LoadRacePresentations(race);
+        LoadRaceTraitsData(race);
+        LoadRaceNoms(race);
+    }
+
+    std::cout << races.size() << " races chargées depuis la DB" << std::endl;
 
     return races;
 }
@@ -158,28 +160,52 @@ std::vector<ClassData> DatabaseManager::LoadClasses() {
     return classes;
 }
 
-std::vector<RacialTrait> DatabaseManager::LoadRacialTraits(const std::string& raceId) {
-    if (!connected) return {};
+void DatabaseManager::LoadRacePresentations(RaceData& race) {
+    std::string query = "SELECT titre, texte FROM race_presentations "
+                        "WHERE race_id = '" + race.id + "' ORDER BY ordre";
 
-    std::stringstream query;
-    query << "SELECT name, name_fr, description, trait_type "
-          << "FROM racial_traits "
-          << "WHERE race_id = '" << raceId << "' "
-          << "ORDER BY name_fr";
-
-    PGresult* result = PQexec(connection, query.str().c_str());
-
-    if (PQresultStatus(result) != PGRES_TUPLES_OK) {
-        std::cerr << "Erreur lors du chargement des traits raciaux: "
-                  << PQerrorMessage(connection) << std::endl;
-        PQclear(result);
-        return {};
+    PGresult* result = PQexec(connection, query.c_str());
+    if (PQresultStatus(result) == PGRES_TUPLES_OK) {
+        for (int i = 0; i < PQntuples(result); ++i) {
+            RacePresentation p;
+            p.titre = PQgetvalue(result, i, 0);
+            p.texte = PQgetvalue(result, i, 1);
+            race.presentations.push_back(p);
+        }
     }
-
-    auto traits = ParseRacialTraits(result);
     PQclear(result);
+}
 
-    return traits;
+void DatabaseManager::LoadRaceTraitsData(RaceData& race) {
+    std::string query = "SELECT titre, texte FROM race_traits "
+                        "WHERE race_id = '" + race.id + "' ORDER BY ordre";
+
+    PGresult* result = PQexec(connection, query.c_str());
+    if (PQresultStatus(result) == PGRES_TUPLES_OK) {
+        for (int i = 0; i < PQntuples(result); ++i) {
+            RaceTrait t;
+            t.titre = PQgetvalue(result, i, 0);
+            t.texte = PQgetvalue(result, i, 1);
+            race.race_traits.push_back(t);
+        }
+    }
+    PQclear(result);
+}
+
+void DatabaseManager::LoadRaceNoms(RaceData& race) {
+    std::string query = "SELECT titre, texte FROM race_noms "
+                        "WHERE race_id = '" + race.id + "' ORDER BY ordre";
+
+    PGresult* result = PQexec(connection, query.c_str());
+    if (PQresultStatus(result) == PGRES_TUPLES_OK) {
+        for (int i = 0; i < PQntuples(result); ++i) {
+            RaceNom n;
+            n.titre = PQgetvalue(result, i, 0);
+            n.texte = PQgetvalue(result, i, 1);
+            race.noms.push_back(n);
+        }
+    }
+    PQclear(result);
 }
 
 std::vector<ClassFeature> DatabaseManager::LoadClassFeatures(const std::string& classId, int level) {
@@ -236,30 +262,21 @@ std::vector<RaceData> DatabaseManager::ParseRaces(PGresult* result) {
     int rows = PQntuples(result);
     for (int i = 0; i < rows; ++i) {
         RaceData race;
-        race.id = PQgetvalue(result, i, 0);
-        race.name = PQgetvalue(result, i, 1);
-        race.name_fr = PQgetvalue(result, i, 2);
-        race.description = PQgetvalue(result, i, 3);
-        race.str_bonus = atoi(PQgetvalue(result, i, 4));
-        race.dex_bonus = atoi(PQgetvalue(result, i, 5));
-        race.con_bonus = atoi(PQgetvalue(result, i, 6));
-        race.int_bonus = atoi(PQgetvalue(result, i, 7));
-        race.wis_bonus = atoi(PQgetvalue(result, i, 8));
-        race.cha_bonus = atoi(PQgetvalue(result, i, 9));
-        race.base_speed = atoi(PQgetvalue(result, i, 10));
-        race.size = PQgetvalue(result, i, 11);
-
-        // Parser les langues (PostgreSQL array)
-        // Format: {Common,Elvish}
-        std::string langsStr = PQgetvalue(result, i, 12);
-        if (!langsStr.empty() && langsStr[0] == '{') {
-            langsStr = langsStr.substr(1, langsStr.length() - 2); // Remove {}
-            std::stringstream ss(langsStr);
-            std::string lang;
-            while (std::getline(ss, lang, ',')) {
-                race.languages.push_back(lang);
-            }
-        }
+        race.id             = PQgetvalue(result, i, 0);
+        race.race_parent_id = PQgetvalue(result, i, 1);
+        race.nom            = PQgetvalue(result, i, 2);
+        race.alias          = PQgetvalue(result, i, 3);
+        race.description    = PQgetvalue(result, i, 4);
+        race.aide_joueur    = PQgetvalue(result, i, 5);
+        race.bonus_forces       = atoi(PQgetvalue(result, i, 6));
+        race.bonus_dexterite    = atoi(PQgetvalue(result, i, 7));
+        race.bonus_constitution = atoi(PQgetvalue(result, i, 8));
+        race.bonus_intelligence = atoi(PQgetvalue(result, i, 9));
+        race.bonus_sagesse      = atoi(PQgetvalue(result, i, 10));
+        race.bonus_charisme     = atoi(PQgetvalue(result, i, 11));
+        race.vitesse_base  = atoi(PQgetvalue(result, i, 12));
+        race.liste_langues = PQgetvalue(result, i, 13);
+        race.image_path    = PQgetvalue(result, i, 14);
 
         races.push_back(race);
     }
@@ -287,22 +304,6 @@ std::vector<ClassData> DatabaseManager::ParseClasses(PGresult* result) {
     return classes;
 }
 
-std::vector<RacialTrait> DatabaseManager::ParseRacialTraits(PGresult* result) {
-    std::vector<RacialTrait> traits;
-
-    int rows = PQntuples(result);
-    for (int i = 0; i < rows; ++i) {
-        RacialTrait trait;
-        trait.name = PQgetvalue(result, i, 0);
-        trait.name_fr = PQgetvalue(result, i, 1);
-        trait.description = PQgetvalue(result, i, 2);
-        trait.trait_type = PQgetvalue(result, i, 3);
-
-        traits.push_back(trait);
-    }
-
-    return traits;
-}
 
 std::vector<ClassFeature> DatabaseManager::ParseClassFeatures(PGresult* result) {
     std::vector<ClassFeature> features;
