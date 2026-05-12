@@ -5,6 +5,7 @@
 #include "../../include/database/DatabaseManager.h"
 #include <string>
 #include <vector>
+#include <map>
 
 /**
  * @brief Créateur de Personnage - Outil de création de personnage D&D 5e
@@ -69,8 +70,11 @@ private:
     // Données de création
     DnD::Character character;  // Personnage en cours de création
     std::vector<Database::RaceData> availableRaces;
+    std::map<std::string, std::vector<Database::RaceData>> allSubRaces;
     Database::RaceData selectedRace;
+    Database::RaceData selectedSubRace;
     int selectedRaceIndex = -1;
+    int selectedSubRaceIndex = -1;
     int selectedVariantIndex = -1;
 
     // Informations personnelles (Étape 1)
@@ -88,14 +92,9 @@ private:
     void RenderBreadcrumb();
 
     /**
-     * @brief Étape 1a: Grille de sélection des races (tuiles 3 colonnes)
+     * @brief Étape 1: Panneau latéral avec sélection race et détails
      */
     void RenderRaceGrid();
-
-    /**
-     * @brief Étape 1b: Détails de la race + variantes + nom
-     */
-    void RenderRaceDetails();
 
     /**
      * @brief Valide l'étape actuelle

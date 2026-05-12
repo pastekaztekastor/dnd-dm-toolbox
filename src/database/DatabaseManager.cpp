@@ -90,7 +90,8 @@ std::vector<RaceData> DatabaseManager::LoadRaces() {
                COALESCE(bonus_sagesse, 0), COALESCE(bonus_charisme, 0),
                COALESCE(vitesse_base, 30), COALESCE(liste_langues, ''), COALESCE(image_path, '')
         FROM races
-        ORDER BY race_parent_id NULLS FIRST, nom
+        WHERE race_parent_id IS NULL
+        ORDER BY nom
     )";
 
     PGresult* result = PQexec(connection, query);
@@ -112,6 +113,38 @@ std::vector<RaceData> DatabaseManager::LoadRaces() {
     }
 
     std::cout << races.size() << " races chargées depuis la DB" << std::endl;
+
+    return races;
+}
+
+std::vector<RaceData> DatabaseManager::LoadSubRaces(const std::string& parentRaceId) {
+    if (!connected) return {};
+
+    std::string query = "SELECT id, COALESCE(race_parent_id::text, ''), nom, "
+                       "COALESCE(alias, ''), COALESCE(description, ''), COALESCE(aide_joueur, ''), "
+                       "COALESCE(bonus_forces, 0), COALESCE(bonus_dexterite, 0), "
+                       "COALESCE(bonus_constitution, 0), COALESCE(bonus_intelligence, 0), "
+                       "COALESCE(bonus_sagesse, 0), COALESCE(bonus_charisme, 0), "
+                       "COALESCE(vitesse_base, 30), COALESCE(liste_langues, ''), COALESCE(image_path, '') "
+                       "FROM races WHERE race_parent_id = '" + parentRaceId + "' ORDER BY nom";
+
+    PGresult* result = PQexec(connection, query.c_str());
+
+    if (PQresultStatus(result) != PGRES_TUPLES_OK) {
+        std::cerr << "Erreur lors du chargement des sous-races: "
+                  << PQerrorMessage(connection) << std::endl;
+        PQclear(result);
+        return {};
+    }
+
+    auto races = ParseRaces(result);
+    PQclear(result);
+
+    for (auto& race : races) {
+        LoadRacePresentations(race);
+        LoadRaceTraitsData(race);
+        LoadRaceNoms(race);
+    }
 
     return races;
 }

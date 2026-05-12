@@ -94,6 +94,7 @@ public:
 
     // Chargement des données
     std::vector<RaceData> LoadRaces();
+    std::vector<RaceData> LoadSubRaces(const std::string& parentRaceId);
     std::vector<ClassData> LoadClasses();
     std::vector<ClassFeature> LoadClassFeatures(const std::string& classId, int level = 1);
 

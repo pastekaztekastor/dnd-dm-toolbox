@@ -4,6 +4,7 @@
 #include <imgui.h>
 #include <nlohmann/json.hpp>
 #include <chrono>
+#include <cstdint>
 
 CharacterCreatorTool::CharacterCreatorTool() {
     // Initialiser stepCompleted pour 8 étapes
@@ -25,6 +26,8 @@ void CharacterCreatorTool::OnCreate() {
     // Charger les races depuis la base de données
     if (dbManager) {
         availableRaces = dbManager->LoadRaces();
+        for (const auto& race : availableRaces)
+            allSubRaces[race.id] = dbManager->LoadSubRaces(race.id);
 
         if (logger) {
             Log("character_creator_loaded", {
@@ -140,11 +143,8 @@ void CharacterCreatorTool::Render() {
         // Contenu selon l'étape actuelle
         switch (currentStep) {
             case STEP_RACE_SELECTION:
-                RenderRaceGrid();
-                break;
-
             case STEP_RACE_DETAILS:
-                RenderRaceDetails();
+                RenderRaceGrid();
                 break;
 
             case STEP_CLASS_SELECTION:
@@ -171,17 +171,20 @@ void CharacterCreatorTool::Render() {
 void CharacterCreatorTool::RenderBreadcrumb() {
     const char* stepNames[] = {
         "Race",
-        "Race Details",
         "Classe",
         "Classe Details",
         "Caracteristiques",
         "Histoire",
         "Sorts",
-        "Resume"
+        "Resume",
+        ""
     };
 
     if (ImGui::BeginTabBar("CharacterCreationTabs", ImGuiTabBarFlags_None)) {
         for (int i = 0; i < 8; i++) {
+            // Skip STEP_RACE_DETAILS (index 1)
+            if (i == 1) continue;
+
             // Déterminer si l'onglet est accessible
             bool canAccess = false;
             if (i == 0) {
@@ -235,101 +238,211 @@ void CharacterCreatorTool::RenderBreadcrumb() {
 }
 
 void CharacterCreatorTool::RenderRaceGrid() {
-    ImGui::TextWrapped("Choisissez votre race");
-    ImGui::Spacing();
-
     if (availableRaces.empty()) {
         ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f),
             "Aucune race disponible. Verifiez la connexion a la base de donnees.");
         return;
     }
 
-    // Grille 3 colonnes
-    int columns = 3;
-    float tileWidth = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x * (columns - 1)) / columns;
+    // Layout: panneau gauche (tree) + panneau droit (détails)
+    // Panel gauche plus étroit : 25% de l'espace
+    float leftWidth = ImGui::GetContentRegionAvail().x * 0.25f;
+    ImGui::Columns(2, "race_layout", true);
+    ImGui::SetColumnWidth(0, leftWidth);
 
-    for (size_t i = 0; i < availableRaces.size(); i++) {
+    // === PANNEAU GAUCHE: Hiérarchie des races ===
+
+    ImGui::BeginChild("RacesList", ImVec2(0, 0), true);
+
+    for (size_t i = 0; i < availableRaces.size(); ++i) {
         const auto& race = availableRaces[i];
+        const auto& children = allSubRaces[race.id];
+        bool hasChildren = !children.empty();
+        bool isSelected = (selectedRaceIndex == (int)i && selectedSubRaceIndex < 0);
 
-        ImGui::BeginChild(("race_tile_" + std::to_string(i)).c_str(),
-                         ImVec2(tileWidth, 120),
-                         true);
+        ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_DrawLinesFull;
+        if (!hasChildren) {
+            flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+            if (isSelected) flags |= ImGuiTreeNodeFlags_Selected;
+        }
 
-        // Nom de la race (centré et en gras)
-        ImGui::PushFont(ImGui::GetFont());  // TODO: utiliser une police plus grande
-        ImGui::Text("%s", race.nom.c_str());
-        ImGui::PopFont();
+        bool isOpen = ImGui::TreeNodeEx((void*)(intptr_t)i, flags, "%s", race.nom.c_str());
 
-        ImGui::Separator();
+        if (ImGui::IsItemClicked()) {
+            if (!hasChildren) {
+                selectedRaceIndex = i;
+                selectedRace = race;
+                selectedSubRaceIndex = -1;
+            }
+        }
 
-        // Description courte (wrapped)
-        ImGui::PushTextWrapPos();
-        ImGui::TextWrapped("%s", race.description.c_str());
-        ImGui::PopTextWrapPos();
+        if (isOpen && hasChildren) {
+            for (size_t j = 0; j < children.size(); ++j) {
+                const auto& subRace = children[j];
+                bool subIsSelected = (selectedRaceIndex == (int)i && selectedSubRaceIndex == (int)j);
+
+                ImGuiTreeNodeFlags subFlags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_SpanAvailWidth;
+                if (subIsSelected) subFlags |= ImGuiTreeNodeFlags_Selected;
+
+                ImGui::TreeNodeEx((void*)(intptr_t)(1000 + j), subFlags, "%s", subRace.nom.c_str());
+
+                if (ImGui::IsItemClicked()) {
+                    selectedRaceIndex = i;
+                    selectedRace = race;
+                    selectedSubRaceIndex = j;
+                    selectedSubRace = subRace;
+                }
+            }
+            ImGui::TreePop();
+        }
+    }
+
+    ImGui::EndChild();
+    ImGui::NextColumn();
+    
+    // === PANNEAU DROIT: Détails de la race ===
+    if (selectedRaceIndex >= 0) {
+        Database::RaceData mergedRace;
+        if (selectedSubRaceIndex >= 0) {
+            mergedRace = selectedSubRace;
+            // Cumul description
+            if (!selectedRace.description.empty() && !mergedRace.description.empty())
+                mergedRace.description = selectedRace.description + "\n\n" + mergedRace.description;
+            else if (!selectedRace.description.empty())
+                mergedRace.description = selectedRace.description;
+            // Cumul bonus
+            mergedRace.bonus_forces       += selectedRace.bonus_forces;
+            mergedRace.bonus_dexterite    += selectedRace.bonus_dexterite;
+            mergedRace.bonus_constitution += selectedRace.bonus_constitution;
+            mergedRace.bonus_intelligence += selectedRace.bonus_intelligence;
+            mergedRace.bonus_sagesse      += selectedRace.bonus_sagesse;
+            mergedRace.bonus_charisme     += selectedRace.bonus_charisme;
+            // Vitesse: garde celle de la sous-race si définie, sinon parent
+            if (mergedRace.vitesse_base == 0)
+                mergedRace.vitesse_base = selectedRace.vitesse_base;
+            // Cumul langues
+            if (!selectedRace.liste_langues.empty() && !mergedRace.liste_langues.empty())
+                mergedRace.liste_langues = selectedRace.liste_langues + ", " + mergedRace.liste_langues;
+            else if (!selectedRace.liste_langues.empty())
+                mergedRace.liste_langues = selectedRace.liste_langues;
+            // Cumul traits : si même titre, concatène le texte ; sinon insère le trait parent en tête
+            for (const auto& parentTrait : selectedRace.race_traits) {
+                auto it = std::find_if(mergedRace.race_traits.begin(), mergedRace.race_traits.end(),
+                    [&](const Database::RaceTrait& t) { return t.titre == parentTrait.titre; });
+                if (it != mergedRace.race_traits.end())
+                    it->texte = parentTrait.texte + "\n- " + it->texte;
+                else
+                    mergedRace.race_traits.insert(mergedRace.race_traits.begin(), parentTrait);
+            }
+            mergedRace.presentations.insert(mergedRace.presentations.begin(), selectedRace.presentations.begin(), selectedRace.presentations.end());
+            mergedRace.noms.insert(mergedRace.noms.begin(), selectedRace.noms.begin(), selectedRace.noms.end());
+        } else {
+            mergedRace = selectedRace;
+        }
+        const auto& displayRace = mergedRace;
+
+        ImGui::BeginChild("RaceDetails", ImVec2(0, 0), true);
+        // Tableau des bonus de caractéristiques
+        ImGui::Text("Bonus de Caracteristiques:");
+        ImGui::Spacing();
+        if (ImGui::BeginTable("BonusTable", 6, ImGuiTableFlags_Borders | ImGuiTableFlags_SizingStretchSame)) {
+            const char* headers[] = { "FOR", "DEX", "CON", "INT", "SAG", "CHA" };
+            for (const char* h : headers)
+                ImGui::TableSetupColumn(h);
+            ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
+            for (const char* h : headers) {
+                ImGui::TableNextColumn();
+                float colWidth = ImGui::GetColumnWidth();
+                float textWidth = ImGui::CalcTextSize(h).x;
+                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (colWidth - textWidth) * 0.5f);
+                ImGui::TextUnformatted(h);
+            }
+
+            ImGui::TableNextRow();
+            int bonuses[] = {
+                displayRace.bonus_forces,
+                displayRace.bonus_dexterite,
+                displayRace.bonus_constitution,
+                displayRace.bonus_intelligence,
+                displayRace.bonus_sagesse,
+                displayRace.bonus_charisme
+            };
+            for (int b : bonuses) {
+                ImGui::TableNextColumn();
+                char buf[8] = "";
+                if (b > 0)      snprintf(buf, sizeof(buf), "+%d", b);
+                else if (b < 0) snprintf(buf, sizeof(buf), "%d", b);
+                float colWidth = ImGui::GetColumnWidth();
+                float textWidth = ImGui::CalcTextSize(buf).x;
+                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (colWidth - textWidth) * 0.5f);
+                ImGui::TextUnformatted(buf);
+            }
+
+            ImGui::EndTable();
+        }
 
         ImGui::Spacing();
+        ImGui::Text("Vitesse: %d pieds", displayRace.vitesse_base);
+        if (!displayRace.liste_langues.empty())
+            ImGui::Text("Langues: %s", displayRace.liste_langues.c_str());
 
-        // Bouton de sélection
-        if (ImGui::Button(("Choisir##" + std::to_string(i)).c_str(), ImVec2(-1, 0))) {
-            selectedRaceIndex = i;
-            selectedRace = race;
-            selectedVariantIndex = -1;  // Reset variante
-            currentStep = STEP_RACE_DETAILS;
+        
+        
+        // Presentations
+        if (!displayRace.presentations.empty()) {
+            ImGui::TextWrapped("Details de la Race");
+            for (const auto& pres : displayRace.presentations) {
+                if (ImGui::CollapsingHeader(pres.titre.c_str())) {
+                    ImGui::PushTextWrapPos();
+                    ImGui::TextWrapped("%s", pres.texte.c_str());
+                    ImGui::PopTextWrapPos();
+                }
+            }
+            ImGui::Spacing();
+            ImGui::Separator();
         }
 
+        // Traits raciaux
+        if (!displayRace.race_traits.empty()) {
+            ImGui::TextWrapped("Traits Raciaux");
+            for (const auto& trait : displayRace.race_traits) {
+                if (ImGui::CollapsingHeader(trait.titre.c_str())) {
+                    ImGui::PushTextWrapPos();
+                    ImGui::TextWrapped("%s", trait.texte.c_str());
+                    ImGui::PopTextWrapPos();
+                }
+            }
+            ImGui::Spacing();
+            ImGui::Separator();
+        }
+
+        // Prénoms et noms
+        if (!displayRace.noms.empty()) {
+            ImGui::TextWrapped("Exemples de Noms");
+            for (const auto& nom : displayRace.noms) {
+                if (ImGui::CollapsingHeader(nom.titre.c_str())) {
+                    ImGui::PushTextWrapPos();
+                    ImGui::TextWrapped("%s", nom.texte.c_str());
+                    ImGui::PopTextWrapPos();
+                }
+            }
+            ImGui::Spacing();
+            ImGui::Separator();
+        }
+
+        // Infos personnelles
+        ImGui::Text("Informations Personnelles:");
+        ImGui::InputText("Prenom", firstName, sizeof(firstName));
+        ImGui::InputText("Nom", lastName, sizeof(lastName));
+        ImGui::InputInt("Age", &age);
         ImGui::EndChild();
-
-        // Nouvelle ligne tous les 3 éléments
-        if ((i + 1) % columns != 0 && i + 1 < availableRaces.size()) {
-            ImGui::SameLine();
-        }
-    }
-}
-
-void CharacterCreatorTool::RenderRaceDetails() {
-    if (selectedRaceIndex < 0) {
-        ImGui::Text("Aucune race selectionnee");
-        return;
+    } else {
+        ImGui::BeginChild("RaceDetails", ImVec2(0, 0), true);
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "Selectionnez une race pour voir les details");
+        ImGui::EndChild();
     }
 
-    ImGui::Text("Race: %s", selectedRace.nom.c_str());
-ImGui::Separator();
-
-    // Description longue (scrollable)
-    ImGui::BeginChild("RaceDescription", ImVec2(0, 300), true);
-    ImGui::PushTextWrapPos();
-    ImGui::TextWrapped("%s", selectedRace.description.c_str());
-    ImGui::PopTextWrapPos();
-    ImGui::EndChild();
-
-    ImGui::Spacing();
-
-    // Bonus de caractéristiques
-    ImGui::Text("Bonus de Caracteristiques:");
-    if (selectedRace.bonus_forces       > 0) ImGui::BulletText("Force: +%d",        selectedRace.bonus_forces);
-    if (selectedRace.bonus_dexterite    > 0) ImGui::BulletText("Dextérité: +%d",    selectedRace.bonus_dexterite);
-    if (selectedRace.bonus_constitution > 0) ImGui::BulletText("Constitution: +%d", selectedRace.bonus_constitution);
-    if (selectedRace.bonus_intelligence > 0) ImGui::BulletText("Intelligence: +%d", selectedRace.bonus_intelligence);
-    if (selectedRace.bonus_sagesse      > 0) ImGui::BulletText("Sagesse: +%d",      selectedRace.bonus_sagesse);
-    if (selectedRace.bonus_charisme     > 0) ImGui::BulletText("Charisme: +%d",     selectedRace.bonus_charisme);
-
-    ImGui::Spacing();
-
-    // Autres infos
-    ImGui::Text("Vitesse: %d pieds", selectedRace.vitesse_base);
-    if (!selectedRace.liste_langues.empty())
-        ImGui::Text("Langues: %s", selectedRace.liste_langues.c_str());
-
-    // TODO: Variantes raciales (boutons radio)
-    // TODO: Traits raciaux
-
-    ImGui::Separator();
-
-    // Informations personnelles
-    ImGui::Text("Informations Personnelles:");
-    ImGui::InputText("Prenom", firstName, sizeof(firstName));
-    ImGui::InputText("Nom", lastName, sizeof(lastName));
-    ImGui::InputInt("Age", &age);
+    ImGui::Columns(1);
 }
 
 
