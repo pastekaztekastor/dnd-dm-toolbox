@@ -38,9 +38,11 @@ compile_commands.json
 
 # Contenu protégé par copyright (Wizards of the Coast / D&D 5e)
 # Les seeds contiennent du texte du Player's Handbook — ne pas publier
-PLAYER HANDBOOK/
+player handbook/
 database/seed/
 database/book/
+
+
 
 # User data
 data/*.json
@@ -57,3 +59,4 @@ logs/
 # Dependencies
 node_modules/
 imgui.ini
+.todo

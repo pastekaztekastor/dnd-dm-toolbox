@@ -88,8 +88,7 @@ private:
 
     // Formater l'affichage d'une classe avec son dé de vie
     std::string FormatClassLabel(const Database::ClassData& cls) const {
-        return cls.name_fr + " (DV: d" + std::to_string(cls.hit_die) +
-               ", " + std::to_string(cls.skill_choices) + " compétences)";
+        return cls.nom + " (DV: d" + std::to_string(cls.dee_de_vie) + ")";
     }
 
 public:
@@ -112,8 +111,8 @@ public:
         // Connexion à la base de données avec les credentials du docker-compose
         if (database->Connect("localhost", "5432", "dnd_toolbox", "dnduser", "dndpass")) {
             // Charger les races et classes depuis la DB
-            dbRaces = database->LoadRaces();
-            dbClasses = database->LoadClasses();
+            dbRaces   = database->Races()->LoadAll();
+            dbClasses = database->Classes()->LoadAll();
         }
     }
 

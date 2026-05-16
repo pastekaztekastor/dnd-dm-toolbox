@@ -180,16 +180,19 @@ void CharacterCreatorWindow::RenderRaceClass() {
         if (selectedClass >= 0 && selectedClass < static_cast<int>(dbClasses.size())) {
             ImGui::Spacing();
             const auto& cls = dbClasses[selectedClass];
-            ImGui::TextWrapped("Dé de vie : d%d | Compétences à choisir : %d",
-                cls.hit_die,
-                cls.skill_choices);
+            ImGui::TextWrapped("Dé de vie : d%d", cls.dee_de_vie);
 
-            if (!cls.primary_ability.empty()) {
-                ImGui::TextWrapped("Caractéristique principale : %s", cls.primary_ability.c_str());
+            if (!cls.caracteristiques_de_sorts.empty()) {
+                ImGui::TextWrapped("Caractéristique d'incantation : %s", cls.caracteristiques_de_sorts.c_str());
             }
 
-            if (!cls.available_skills.empty()) {
-                ImGui::Text("Compétences disponibles : %zu", cls.available_skills.size());
+            if (!cls.jets_de_sauvegarde.empty()) {
+                std::string saves;
+                for (size_t k = 0; k < cls.jets_de_sauvegarde.size(); ++k) {
+                    if (k > 0) saves += ", ";
+                    saves += cls.jets_de_sauvegarde[k];
+                }
+                ImGui::TextWrapped("Jets de sauvegarde : %s", saves.c_str());
             }
         }
     } else {
