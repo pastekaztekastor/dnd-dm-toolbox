@@ -49,7 +49,8 @@ CREATE TABLE IF NOT EXISTS races (
     liste_sortileges UUID[] DEFAULT ARRAY[]::UUID[], -- IDs vers la table sortileges (TODO: migrer vers table de liaison)
     liste_equipement UUID[] DEFAULT ARRAY[]::UUID[], -- IDs vers la table equipement  (TODO: migrer vers table de liaison)
 
-    -- Image
+    -- Image (chemin relatif depuis assets/images/, ex: 'races/human.png')
+    -- Source: Wizards of the Coast — usage personnel uniquement (voir assets/images/COPYRIGHT.md)
     image_path TEXT DEFAULT 'placeholder.png',
 
     -- Méta
