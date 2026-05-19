@@ -310,18 +310,11 @@ bool Application::InitImGui() {
 bool Application::InitDatabase() {
     dbManager = std::make_unique<Database::DatabaseManager>();
 
-    // Tenter de se connecter à PostgreSQL (Docker)
-    bool connected = dbManager->Connect(
-        "localhost",    // host
-        "5432",         // port
-        "dnd_toolbox",  // dbname
-        "dnduser",      // user
-        "dndpass"       // password
-    );
+    bool connected = dbManager->Connect("dnd_toolbox.db");
 
     if (connected) {
         toolRegistry->SetDatabaseManager(dbManager.get());
-        std::cout << "Base de données PostgreSQL connectée" << std::endl;
+        std::cout << "Base de données SQLite connectée" << std::endl;
         return true;
     } else {
         std::cerr << "Base de données non disponible (mode hors-ligne)" << std::endl;

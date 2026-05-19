@@ -3,35 +3,52 @@
 
 namespace Database {
 
-RaceRepository::RaceRepository(PGconn* conn)
-    : conn(conn)
-{
+static std::string col(sqlite3_stmt* stmt, int i) {
+    const char* val = reinterpret_cast<const char*>(sqlite3_column_text(stmt, i));
+    return val ? val : "";
 }
 
+RaceRepository::RaceRepository(sqlite3* db) : db(db) {}
+
 std::vector<RaceData> RaceRepository::LoadAll() {
-    if (!conn) return {};
+    if (!db) return {};
 
-    const char* query = R"(
-        SELECT id, COALESCE(race_parent_id::text, ''), nom,
-               COALESCE(alias, ''), COALESCE(description, ''), COALESCE(aide_joueur, ''),
-               COALESCE(bonus_forces, 0), COALESCE(bonus_dexterite, 0),
-               COALESCE(bonus_constitution, 0), COALESCE(bonus_intelligence, 0),
-               COALESCE(bonus_sagesse, 0), COALESCE(bonus_charisme, 0),
-               COALESCE(vitesse_base, 30), COALESCE(liste_langues, ''), COALESCE(image_path, '')
-        FROM races
-        WHERE race_parent_id IS NULL
-        ORDER BY nom
-    )";
+    const char* query =
+        "SELECT id, COALESCE(race_parent_id, ''), nom, "
+        "COALESCE(alias, ''), COALESCE(description, ''), COALESCE(aide_joueur, ''), "
+        "COALESCE(bonus_forces, 0), COALESCE(bonus_dexterite, 0), "
+        "COALESCE(bonus_constitution, 0), COALESCE(bonus_intelligence, 0), "
+        "COALESCE(bonus_sagesse, 0), COALESCE(bonus_charisme, 0), "
+        "COALESCE(vitesse_base, 30), COALESCE(liste_langues, ''), COALESCE(image_path, '') "
+        "FROM races WHERE race_parent_id IS NULL ORDER BY nom";
 
-    PGresult* result = PQexec(conn, query);
-    if (PQresultStatus(result) != PGRES_TUPLES_OK) {
-        std::cerr << "Erreur LoadAll (races): " << PQerrorMessage(conn) << std::endl;
-        PQclear(result);
+    sqlite3_stmt* stmt = nullptr;
+    if (sqlite3_prepare_v2(db, query, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Erreur LoadAll (races): " << sqlite3_errmsg(db) << std::endl;
         return {};
     }
 
-    auto races = Parse(result);
-    PQclear(result);
+    std::vector<RaceData> races;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        RaceData race;
+        race.id                 = col(stmt, 0);
+        race.race_parent_id     = col(stmt, 1);
+        race.nom                = col(stmt, 2);
+        race.alias              = col(stmt, 3);
+        race.description        = col(stmt, 4);
+        race.aide_joueur        = col(stmt, 5);
+        race.bonus_forces       = sqlite3_column_int(stmt, 6);
+        race.bonus_dexterite    = sqlite3_column_int(stmt, 7);
+        race.bonus_constitution = sqlite3_column_int(stmt, 8);
+        race.bonus_intelligence = sqlite3_column_int(stmt, 9);
+        race.bonus_sagesse      = sqlite3_column_int(stmt, 10);
+        race.bonus_charisme     = sqlite3_column_int(stmt, 11);
+        race.vitesse_base       = sqlite3_column_int(stmt, 12);
+        race.liste_langues      = col(stmt, 13);
+        race.image_path         = col(stmt, 14);
+        races.push_back(race);
+    }
+    sqlite3_finalize(stmt);
 
     for (auto& race : races) {
         LoadPresentations(race);
@@ -44,26 +61,45 @@ std::vector<RaceData> RaceRepository::LoadAll() {
 }
 
 std::vector<RaceData> RaceRepository::LoadSubRaces(const std::string& parentRaceId) {
-    if (!conn) return {};
+    if (!db) return {};
 
-    std::string query =
-        "SELECT id, COALESCE(race_parent_id::text, ''), nom, "
+    const char* query =
+        "SELECT id, COALESCE(race_parent_id, ''), nom, "
         "COALESCE(alias, ''), COALESCE(description, ''), COALESCE(aide_joueur, ''), "
         "COALESCE(bonus_forces, 0), COALESCE(bonus_dexterite, 0), "
         "COALESCE(bonus_constitution, 0), COALESCE(bonus_intelligence, 0), "
         "COALESCE(bonus_sagesse, 0), COALESCE(bonus_charisme, 0), "
         "COALESCE(vitesse_base, 30), COALESCE(liste_langues, ''), COALESCE(image_path, '') "
-        "FROM races WHERE race_parent_id = '" + parentRaceId + "' ORDER BY nom";
+        "FROM races WHERE race_parent_id = ? ORDER BY nom";
 
-    PGresult* result = PQexec(conn, query.c_str());
-    if (PQresultStatus(result) != PGRES_TUPLES_OK) {
-        std::cerr << "Erreur LoadSubRaces: " << PQerrorMessage(conn) << std::endl;
-        PQclear(result);
+    sqlite3_stmt* stmt = nullptr;
+    if (sqlite3_prepare_v2(db, query, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Erreur LoadSubRaces: " << sqlite3_errmsg(db) << std::endl;
         return {};
     }
+    sqlite3_bind_text(stmt, 1, parentRaceId.c_str(), -1, SQLITE_STATIC);
 
-    auto races = Parse(result);
-    PQclear(result);
+    std::vector<RaceData> races;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        RaceData race;
+        race.id                 = col(stmt, 0);
+        race.race_parent_id     = col(stmt, 1);
+        race.nom                = col(stmt, 2);
+        race.alias              = col(stmt, 3);
+        race.description        = col(stmt, 4);
+        race.aide_joueur        = col(stmt, 5);
+        race.bonus_forces       = sqlite3_column_int(stmt, 6);
+        race.bonus_dexterite    = sqlite3_column_int(stmt, 7);
+        race.bonus_constitution = sqlite3_column_int(stmt, 8);
+        race.bonus_intelligence = sqlite3_column_int(stmt, 9);
+        race.bonus_sagesse      = sqlite3_column_int(stmt, 10);
+        race.bonus_charisme     = sqlite3_column_int(stmt, 11);
+        race.vitesse_base       = sqlite3_column_int(stmt, 12);
+        race.liste_langues      = col(stmt, 13);
+        race.image_path         = col(stmt, 14);
+        races.push_back(race);
+    }
+    sqlite3_finalize(stmt);
 
     for (auto& race : races) {
         LoadPresentations(race);
@@ -75,73 +111,45 @@ std::vector<RaceData> RaceRepository::LoadSubRaces(const std::string& parentRace
 }
 
 void RaceRepository::LoadPresentations(RaceData& race) {
-    std::string query = "SELECT titre, texte FROM race_presentations "
-                        "WHERE race_id = '" + race.id + "' ORDER BY ordre";
-    PGresult* result = PQexec(conn, query.c_str());
-    if (PQresultStatus(result) == PGRES_TUPLES_OK) {
-        for (int i = 0; i < PQntuples(result); ++i) {
-            RacePresentation p;
-            p.titre = PQgetvalue(result, i, 0);
-            p.texte = PQgetvalue(result, i, 1);
-            race.presentations.push_back(p);
-        }
+    const char* query = "SELECT titre, texte FROM race_presentations WHERE race_id = ? ORDER BY ordre";
+    sqlite3_stmt* stmt = nullptr;
+    if (sqlite3_prepare_v2(db, query, -1, &stmt, nullptr) != SQLITE_OK) return;
+    sqlite3_bind_text(stmt, 1, race.id.c_str(), -1, SQLITE_STATIC);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        RacePresentation p;
+        p.titre = col(stmt, 0);
+        p.texte = col(stmt, 1);
+        race.presentations.push_back(p);
     }
-    PQclear(result);
+    sqlite3_finalize(stmt);
 }
 
 void RaceRepository::LoadTraits(RaceData& race) {
-    std::string query = "SELECT titre, texte FROM race_traits "
-                        "WHERE race_id = '" + race.id + "' ORDER BY ordre";
-    PGresult* result = PQexec(conn, query.c_str());
-    if (PQresultStatus(result) == PGRES_TUPLES_OK) {
-        for (int i = 0; i < PQntuples(result); ++i) {
-            RaceTrait t;
-            t.titre = PQgetvalue(result, i, 0);
-            t.texte = PQgetvalue(result, i, 1);
-            race.race_traits.push_back(t);
-        }
+    const char* query = "SELECT titre, texte FROM race_traits WHERE race_id = ? ORDER BY ordre";
+    sqlite3_stmt* stmt = nullptr;
+    if (sqlite3_prepare_v2(db, query, -1, &stmt, nullptr) != SQLITE_OK) return;
+    sqlite3_bind_text(stmt, 1, race.id.c_str(), -1, SQLITE_STATIC);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        RaceTrait t;
+        t.titre = col(stmt, 0);
+        t.texte = col(stmt, 1);
+        race.race_traits.push_back(t);
     }
-    PQclear(result);
+    sqlite3_finalize(stmt);
 }
 
 void RaceRepository::LoadNoms(RaceData& race) {
-    std::string query = "SELECT titre, texte FROM race_noms "
-                        "WHERE race_id = '" + race.id + "' ORDER BY ordre";
-    PGresult* result = PQexec(conn, query.c_str());
-    if (PQresultStatus(result) == PGRES_TUPLES_OK) {
-        for (int i = 0; i < PQntuples(result); ++i) {
-            RaceNom n;
-            n.titre = PQgetvalue(result, i, 0);
-            n.texte = PQgetvalue(result, i, 1);
-            race.noms.push_back(n);
-        }
+    const char* query = "SELECT titre, texte FROM race_noms WHERE race_id = ? ORDER BY ordre";
+    sqlite3_stmt* stmt = nullptr;
+    if (sqlite3_prepare_v2(db, query, -1, &stmt, nullptr) != SQLITE_OK) return;
+    sqlite3_bind_text(stmt, 1, race.id.c_str(), -1, SQLITE_STATIC);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        RaceNom n;
+        n.titre = col(stmt, 0);
+        n.texte = col(stmt, 1);
+        race.noms.push_back(n);
     }
-    PQclear(result);
-}
-
-std::vector<RaceData> RaceRepository::Parse(PGresult* result) {
-    std::vector<RaceData> races;
-    int rows = PQntuples(result);
-    for (int i = 0; i < rows; ++i) {
-        RaceData race;
-        race.id             = PQgetvalue(result, i, 0);
-        race.race_parent_id = PQgetvalue(result, i, 1);
-        race.nom            = PQgetvalue(result, i, 2);
-        race.alias          = PQgetvalue(result, i, 3);
-        race.description    = PQgetvalue(result, i, 4);
-        race.aide_joueur    = PQgetvalue(result, i, 5);
-        race.bonus_forces       = atoi(PQgetvalue(result, i, 6));
-        race.bonus_dexterite    = atoi(PQgetvalue(result, i, 7));
-        race.bonus_constitution = atoi(PQgetvalue(result, i, 8));
-        race.bonus_intelligence = atoi(PQgetvalue(result, i, 9));
-        race.bonus_sagesse      = atoi(PQgetvalue(result, i, 10));
-        race.bonus_charisme     = atoi(PQgetvalue(result, i, 11));
-        race.vitesse_base       = atoi(PQgetvalue(result, i, 12));
-        race.liste_langues      = PQgetvalue(result, i, 13);
-        race.image_path         = PQgetvalue(result, i, 14);
-        races.push_back(race);
-    }
-    return races;
+    sqlite3_finalize(stmt);
 }
 
 } // namespace Database

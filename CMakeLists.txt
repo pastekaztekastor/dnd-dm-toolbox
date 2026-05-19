@@ -13,12 +13,6 @@ find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(SQLite3 REQUIRED)
 
-# PostgreSQL via pg_config (portable sur toutes les distros)
-find_program(PG_CONFIG pg_config REQUIRED)
-execute_process(COMMAND ${PG_CONFIG} --includedir OUTPUT_VARIABLE PG_INCLUDE_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
-execute_process(COMMAND ${PG_CONFIG} --libdir     OUTPUT_VARIABLE PG_LIB_DIR     OUTPUT_STRIP_TRAILING_WHITESPACE)
-find_library(PG_LIBRARY NAMES pq HINTS ${PG_LIB_DIR} REQUIRED)
-
 # Dear ImGui
 set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs/imgui)
 set(IMGUI_SOURCES
@@ -63,14 +57,12 @@ set_target_properties(${PROJECT_NAME} PROPERTIES ENABLE_EXPORTS ON)
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${JSON_DIR}
-    ${PG_INCLUDE_DIR}
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     imgui
     OpenGL::GL
     glfw
-    ${PG_LIBRARY}
     SQLite::SQLite3
     nfd
     ${CMAKE_DL_LIBS}

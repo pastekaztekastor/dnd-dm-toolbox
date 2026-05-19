@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
-#include <libpq-fe.h>
+#include <sqlite3.h>
 
 namespace Database {
 
@@ -26,15 +26,14 @@ struct RaceData {
 
 class RaceRepository {
 public:
-    explicit RaceRepository(PGconn* conn);
+    explicit RaceRepository(sqlite3* db);
 
     std::vector<RaceData> LoadAll();
     std::vector<RaceData> LoadSubRaces(const std::string& parentRaceId);
 
 private:
-    PGconn* conn;
+    sqlite3* db;
 
-    std::vector<RaceData> Parse(PGresult* result);
     void LoadPresentations(RaceData& race);
     void LoadTraits(RaceData& race);
     void LoadNoms(RaceData& race);

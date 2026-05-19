@@ -4,50 +4,60 @@
 
 namespace Database {
 
-// Parse un TEXT[] PostgreSQL de la forme {val1,val2,...} en vector<string>
-static std::vector<std::string> ParsePgTextArray(const std::string& raw) {
+static std::string col(sqlite3_stmt* stmt, int i) {
+    const char* val = reinterpret_cast<const char*>(sqlite3_column_text(stmt, i));
+    return val ? val : "";
+}
+
+// Parse une liste CSV "val1,val2,..." en vector<string>
+static std::vector<std::string> ParseCsvList(const std::string& raw) {
     std::vector<std::string> out;
-    if (raw.size() < 2 || raw.front() != '{' || raw.back() != '}') return out;
-    std::string inner = raw.substr(1, raw.size() - 2);
-    std::stringstream ss(inner);
+    if (raw.empty()) return out;
+    std::stringstream ss(raw);
     std::string token;
     while (std::getline(ss, token, ',')) {
-        if (!token.empty() && token.front() == '"')
-            token = token.substr(1, token.size() - 2);
-        out.push_back(token);
+        if (!token.empty())
+            out.push_back(token);
     }
     return out;
 }
 
-ClassRepository::ClassRepository(PGconn* conn)
-    : conn(conn)
-{
-}
+ClassRepository::ClassRepository(sqlite3* db) : db(db) {}
 
 std::vector<ClassData> ClassRepository::LoadAll() {
-    if (!conn) return {};
+    if (!db) return {};
 
-    const char* query = R"(
-        SELECT id, COALESCE(classe_parente_id::text, ''), nom,
-               COALESCE(alias, ''), COALESCE(description, ''), COALESCE(aide_joueur, ''),
-               COALESCE(dee_de_vie, 8),
-               COALESCE(jets_de_sauvegarde::text, '{}'),
-               COALESCE(caracteristiques_de_sorts, ''),
-               COALESCE(image_path, '')
-        FROM classes
-        WHERE classe_parente_id IS NULL
-        ORDER BY nom
-    )";
+    const char* query =
+        "SELECT id, COALESCE(classe_parente_id, ''), nom, "
+        "COALESCE(alias, ''), COALESCE(description, ''), COALESCE(aide_joueur, ''), "
+        "COALESCE(dee_de_vie, 8), "
+        "COALESCE(jets_de_sauvegarde, ''), "
+        "COALESCE(caracteristiques_de_sorts, ''), "
+        "COALESCE(image_path, '') "
+        "FROM classes WHERE classe_parente_id IS NULL ORDER BY nom";
 
-    PGresult* result = PQexec(conn, query);
-    if (PQresultStatus(result) != PGRES_TUPLES_OK) {
-        std::cerr << "Erreur LoadAll (classes): " << PQerrorMessage(conn) << std::endl;
-        PQclear(result);
+    sqlite3_stmt* stmt = nullptr;
+    if (sqlite3_prepare_v2(db, query, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Erreur LoadAll (classes): " << sqlite3_errmsg(db) << std::endl;
         return {};
     }
 
-    auto classes = Parse(result);
-    PQclear(result);
+    std::vector<ClassData> classes;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        ClassData cls;
+        cls.id                        = col(stmt, 0);
+        cls.parent_id                 = col(stmt, 1);
+        cls.nom                       = col(stmt, 2);
+        cls.alias                     = col(stmt, 3);
+        cls.description               = col(stmt, 4);
+        cls.aide_joueur               = col(stmt, 5);
+        cls.dee_de_vie                = sqlite3_column_int(stmt, 6);
+        cls.jets_de_sauvegarde        = ParseCsvList(col(stmt, 7));
+        cls.caracteristiques_de_sorts = col(stmt, 8);
+        cls.image_path                = col(stmt, 9);
+        classes.push_back(cls);
+    }
+    sqlite3_finalize(stmt);
 
     for (auto& cls : classes) {
         LoadPresentations(cls);
@@ -59,26 +69,40 @@ std::vector<ClassData> ClassRepository::LoadAll() {
 }
 
 std::vector<ClassData> ClassRepository::LoadSubClasses(const std::string& parentClassId) {
-    if (!conn) return {};
+    if (!db) return {};
 
-    std::string query =
-        "SELECT id, COALESCE(classe_parente_id::text, ''), nom, "
+    const char* query =
+        "SELECT id, COALESCE(classe_parente_id, ''), nom, "
         "COALESCE(alias, ''), COALESCE(description, ''), COALESCE(aide_joueur, ''), "
         "COALESCE(dee_de_vie, 8), "
-        "COALESCE(jets_de_sauvegarde::text, '{}'), "
+        "COALESCE(jets_de_sauvegarde, ''), "
         "COALESCE(caracteristiques_de_sorts, ''), "
         "COALESCE(image_path, '') "
-        "FROM classes WHERE classe_parente_id = '" + parentClassId + "' ORDER BY nom";
+        "FROM classes WHERE classe_parente_id = ? ORDER BY nom";
 
-    PGresult* result = PQexec(conn, query.c_str());
-    if (PQresultStatus(result) != PGRES_TUPLES_OK) {
-        std::cerr << "Erreur LoadSubClasses: " << PQerrorMessage(conn) << std::endl;
-        PQclear(result);
+    sqlite3_stmt* stmt = nullptr;
+    if (sqlite3_prepare_v2(db, query, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Erreur LoadSubClasses: " << sqlite3_errmsg(db) << std::endl;
         return {};
     }
+    sqlite3_bind_text(stmt, 1, parentClassId.c_str(), -1, SQLITE_STATIC);
 
-    auto classes = Parse(result);
-    PQclear(result);
+    std::vector<ClassData> classes;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        ClassData cls;
+        cls.id                        = col(stmt, 0);
+        cls.parent_id                 = col(stmt, 1);
+        cls.nom                       = col(stmt, 2);
+        cls.alias                     = col(stmt, 3);
+        cls.description               = col(stmt, 4);
+        cls.aide_joueur               = col(stmt, 5);
+        cls.dee_de_vie                = sqlite3_column_int(stmt, 6);
+        cls.jets_de_sauvegarde        = ParseCsvList(col(stmt, 7));
+        cls.caracteristiques_de_sorts = col(stmt, 8);
+        cls.image_path                = col(stmt, 9);
+        classes.push_back(cls);
+    }
+    sqlite3_finalize(stmt);
 
     for (auto& cls : classes) {
         LoadPresentations(cls);
@@ -89,58 +113,36 @@ std::vector<ClassData> ClassRepository::LoadSubClasses(const std::string& parent
 }
 
 void ClassRepository::LoadPresentations(ClassData& cls) {
-    std::string query = "SELECT titre, texte FROM classe_presentations "
-                        "WHERE classe_id = '" + cls.id + "' ORDER BY ordre";
-    PGresult* result = PQexec(conn, query.c_str());
-    if (PQresultStatus(result) == PGRES_TUPLES_OK) {
-        for (int i = 0; i < PQntuples(result); ++i) {
-            ClassPresentation p;
-            p.titre = PQgetvalue(result, i, 0);
-            p.texte = PQgetvalue(result, i, 1);
-            cls.presentations.push_back(p);
-        }
+    const char* query = "SELECT titre, texte FROM classe_presentations WHERE classe_id = ? ORDER BY ordre";
+    sqlite3_stmt* stmt = nullptr;
+    if (sqlite3_prepare_v2(db, query, -1, &stmt, nullptr) != SQLITE_OK) return;
+    sqlite3_bind_text(stmt, 1, cls.id.c_str(), -1, SQLITE_STATIC);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        ClassPresentation p;
+        p.titre = col(stmt, 0);
+        p.texte = col(stmt, 1);
+        cls.presentations.push_back(p);
     }
-    PQclear(result);
+    sqlite3_finalize(stmt);
 }
 
 void ClassRepository::LoadAptitudes(ClassData& cls) {
-    std::string query =
+    const char* query =
         "SELECT nom, COALESCE(description_rapide, ''), niveau_acquisition, "
-        "COALESCE(gain_de_sort, false) "
-        "FROM classe_aptitudes "
-        "WHERE classe_id = '" + cls.id + "' ORDER BY niveau_acquisition, nom";
-    PGresult* result = PQexec(conn, query.c_str());
-    if (PQresultStatus(result) == PGRES_TUPLES_OK) {
-        for (int i = 0; i < PQntuples(result); ++i) {
-            ClassAptitude a;
-            a.nom                = PQgetvalue(result, i, 0);
-            a.description_rapide = PQgetvalue(result, i, 1);
-            a.niveau_acquisition = atoi(PQgetvalue(result, i, 2));
-            a.gain_de_sort       = std::string(PQgetvalue(result, i, 3)) == "t";
-            cls.aptitudes.push_back(a);
-        }
+        "COALESCE(gain_de_sort, 0) "
+        "FROM classe_aptitudes WHERE classe_id = ? ORDER BY niveau_acquisition, nom";
+    sqlite3_stmt* stmt = nullptr;
+    if (sqlite3_prepare_v2(db, query, -1, &stmt, nullptr) != SQLITE_OK) return;
+    sqlite3_bind_text(stmt, 1, cls.id.c_str(), -1, SQLITE_STATIC);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        ClassAptitude a;
+        a.nom                = col(stmt, 0);
+        a.description_rapide = col(stmt, 1);
+        a.niveau_acquisition = sqlite3_column_int(stmt, 2);
+        a.gain_de_sort       = sqlite3_column_int(stmt, 3) != 0;
+        cls.aptitudes.push_back(a);
     }
-    PQclear(result);
-}
-
-std::vector<ClassData> ClassRepository::Parse(PGresult* result) {
-    std::vector<ClassData> classes;
-    int rows = PQntuples(result);
-    for (int i = 0; i < rows; ++i) {
-        ClassData cls;
-        cls.id                        = PQgetvalue(result, i, 0);
-        cls.parent_id                 = PQgetvalue(result, i, 1);
-        cls.nom                       = PQgetvalue(result, i, 2);
-        cls.alias                     = PQgetvalue(result, i, 3);
-        cls.description               = PQgetvalue(result, i, 4);
-        cls.aide_joueur               = PQgetvalue(result, i, 5);
-        cls.dee_de_vie                = atoi(PQgetvalue(result, i, 6));
-        cls.jets_de_sauvegarde        = ParsePgTextArray(PQgetvalue(result, i, 7));
-        cls.caracteristiques_de_sorts = PQgetvalue(result, i, 8);
-        cls.image_path                = PQgetvalue(result, i, 9);
-        classes.push_back(cls);
-    }
-    return classes;
+    sqlite3_finalize(stmt);
 }
 
 } // namespace Database

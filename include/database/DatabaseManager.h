@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <memory>
-#include <libpq-fe.h>
+#include <sqlite3.h>
 #include "repositories/RaceRepository.h"
 #include "repositories/ClassRepository.h"
 
@@ -12,11 +12,7 @@ public:
     DatabaseManager();
     ~DatabaseManager();
 
-    bool Connect(const std::string& host     = "localhost",
-                 const std::string& port     = "5432",
-                 const std::string& dbname   = "dnd_toolbox",
-                 const std::string& user     = "dnd_user",
-                 const std::string& password = "dnd_password");
+    bool Connect(const std::string& dbPath = "dnd_toolbox.db");
     void Disconnect();
     bool IsConnected() const { return connected; }
     std::string GetLastError() const;
@@ -25,9 +21,9 @@ public:
     ClassRepository* Classes() { return classRepo.get(); }
 
 private:
-    PGconn*     connection = nullptr;
-    std::string connectionString;
-    bool        connected  = false;
+    sqlite3*    db        = nullptr;
+    bool        connected = false;
+    std::string lastError;
 
     std::unique_ptr<RaceRepository>  raceRepo;
     std::unique_ptr<ClassRepository> classRepo;
