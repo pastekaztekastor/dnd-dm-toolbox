@@ -12,6 +12,13 @@ option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(PostgreSQL REQUIRED)
+# Debian/Parrot/Ubuntu placent les headers dans un sous-dossier
+if(PostgreSQL_FOUND)
+    execute_process(COMMAND pg_config --includedir
+        OUTPUT_VARIABLE PG_INCLUDE_DIR
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+    list(APPEND PostgreSQL_INCLUDE_DIRS ${PG_INCLUDE_DIR})
+endif()
 find_package(SQLite3 REQUIRED)
 
 # Dear ImGui
