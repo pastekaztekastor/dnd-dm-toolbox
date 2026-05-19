@@ -1,6 +1,16 @@
 -- -- ============================================================================
--- NOUVEAU SCHÉMA POUR LES CLASSES D&D 5E
--- Schéma relationnel normalisé basé sur les spécifications du TODO.md
+-- Fichier: 04_create_classes_schema.sql
+-- Description: Création de la table 
+-- - classes                    : Classes et sous classe (genre les ecole de magie ou les choix de terrain)
+-- - classe_presentations       : Liste des paragraphe pour présenté la classe, juste parce que c'est dynamique.
+-- - classe_evolutions          : Liste de tout les niveau de toutes les classe avec leur aptitude. 
+-- - classe_aptitudes           : Les aptitude. c'est pas encore bien défini ce que je veux pour l'instant c'est juste un champs de texte. J'utiliserai les alias en lien MD+
+-- - classe_choix_equipement    : C'est pour les différents choix de stuff lors du building de perso 
+
+-- Auteur: MATHURIN CHAMPÉMONT
+-- Date: 2026_05-16
+
+-- HACK : Mise en page TURBO dégeux.
 -- ============================================================================
 
 -- Enable UUID extension (au cas où)
@@ -13,30 +23,29 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE IF NOT EXISTS classes (
     id                      UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    nom                     VARCHAR(100) NOT NULL UNIQUE,           -- Nom de la classe (ex: "Guerrier", "Sorcier", etc.)
-    classe_parente_id       UUID REFERENCES classes(id),            -- NULL si classe parente, sinon référence
-    alias                   VARCHAR(100),                           -- Nom alternatif pour pseudo markdown
+    nom                     VARCHAR(100) NOT NULL UNIQUE,  -- Nom de la classe (ex: "Guerrier", "Sorcier", etc.)
+    classe_parente_id       UUID REFERENCES classes(id),   -- NULL si classe parente, sinon référence
+    alias                   VARCHAR(100),                  -- Nom alternatif pour pseudo markdown
 
     -- Description générale     
-    description             TEXT,                                   -- Description rapide de la classe 
-    aide_joueur             TEXT,                                   -- Conseils pour les joueurs
-    creation_classe         TEXT,                                   -- Comment créer une classe
-    creation_rapide         TEXT,                                   -- Comment créer une classe rapidement
+    description             TEXT,                -- Description rapide de la classe 
+    aide_joueur             TEXT,                -- Conseils pour les joueurs
+    creation_classe         TEXT,                -- Comment créer une classe
+    creation_rapide         TEXT,                -- Comment créer une classe rapidement
 
     -- Aptitudes de classe      
     -- Vie      
-    dee_de_vie              INTEGER NOT NULL,                       -- D8, D10, etc.
-    points_de_vie           INTEGER NOT NULL,                       -- Points de vie à 1er niveau
-    points_de_vie_par_niveau INTEGER NOT NULL,                      -- Points de vie gagnés par
+    dee_de_vie              INTEGER NOT NULL,    -- D8, D10, etc.
+    points_de_vie           INTEGER NOT NULL,    -- Points de vie à 1er niveau
+    points_de_vie_par_niveau INTEGER NOT NULL,   -- Points de vie gagnés par
+
     -- Maitrises        
-    armures                 UUID[],                                 -- Liste d'armures (refs vers armures.id)
-    arme                    UUID[],                                 -- Liste d'armes (refs vers armes.id)
-    outils                  UUID[],                                 -- Liste d'outils (refs vers outils.id)
-    jets_de_sauvegarde      TEXT[],                                 -- Liste de jets de sauvegarde séparés par virgules
-    competences             TEXT[],                                 -- Liste de compétences séparées par virgules
+    equipement_maitrise     UUID[],              -- Liste d'armures (refs vers equipement.id)
+    jets_de_sauvegarde      TEXT[],              -- Liste de jets de sauvegarde séparés par virgules
+    competences             TEXT[],              -- Liste de compétences séparées par virgules
 
     -- Sorts  
-    caracteristiques_de_sorts VARCHAR(3),                           -- Caractéristiques de sorts ("INT", "CHA", etc.)
+    caracteristiques_de_sorts VARCHAR(3),        -- Caractéristiques de sorts ("INT", "CHA", etc.)
 
     -- Image (chemin relatif depuis assets/images/, ex: 'classes/fighter.png')
     -- Source: Wizards of the Coast — usage personnel uniquement (voir assets/images/COPYRIGHT.md)
@@ -119,8 +128,5 @@ CREATE TABLE IF NOT EXISTS classe_choix_equipement (
     id                 UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     classe_id          UUID REFERENCES classes(id) ON DELETE CASCADE,  -- Référence à la classe
     choix_num          INTEGER NOT NULL,                               -- Numéro du choix (1, 2, 3 ou 4)
-    equipement_id      UUID[],                                         -- liste séparée par des virgule de réf (vers equipements.id)
-    arme_id            UUID[],                                         -- liste séparée par des virgule de réf (vers armes.id)
-    armure_id          UUID[],                                         -- liste séparée par des virgule de réf (vers armures.id)
-    outil_id           UUID[]                                          -- liste séparée par des virgule de réf (vers outils.id)
+    equipement_id      UUID[],
 );
