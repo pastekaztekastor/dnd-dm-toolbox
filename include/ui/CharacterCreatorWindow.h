@@ -108,8 +108,7 @@ public:
         nameBuffer[0] = '\0';
         backgroundBuffer[0] = '\0';
 
-        // Connexion à la base de données avec les credentials du docker-compose
-        if (database->Connect("localhost", "5432", "dnd_toolbox", "dnduser", "dndpass")) {
+        if (database->Connect("dnd_toolbox.db")) {
             // Charger les races et classes depuis la DB
             dbRaces   = database->Races()->LoadAll();
             dbClasses = database->Classes()->LoadAll();
