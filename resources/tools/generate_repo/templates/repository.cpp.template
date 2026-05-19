@@ -1,0 +1,78 @@
+#include "{{INCLUDE_PATH}}{{CLASS_NAME}}.h"
+#include <iostream>
+
+namespace Database {
+
+{{CLASS_NAME}}::{{CLASS_NAME}}(PGconn* conn)
+    : conn(conn)
+{
+}
+
+// ============================================================
+// LoadAll
+// ============================================================
+std::vector<{{STRUCT_NAME}}> {{CLASS_NAME}}::LoadAll() {
+    if (!conn) return {};
+
+    const char* query = R"(
+        SELECT {{SELECT_COLUMNS}}
+        FROM {{MAIN_TABLE}}
+        ORDER BY id
+    )";
+
+    PGresult* result = PQexec(conn, query);
+    if (PQresultStatus(result) != PGRES_TUPLES_OK) {
+        std::cerr << "Erreur LoadAll ({{MAIN_TABLE}}): " << PQerrorMessage(conn) << std::endl;
+        PQclear(result);
+        return {};
+    }
+
+    auto items = Parse(result);
+    PQclear(result);
+
+    for (auto& obj : items) {
+{{RELATED_LOAD_CALLS}}    }
+
+    std::cout << items.size() << " {{MAIN_TABLE}} chargés depuis la DB" << std::endl;
+    return items;
+}
+
+// ============================================================
+// LoadById
+// ============================================================
+{{STRUCT_NAME}} {{CLASS_NAME}}::LoadById(const std::string& id) {
+    if (!conn) return {};
+
+    std::string query =
+        "SELECT {{SELECT_COLUMNS_FLAT}} "
+        "FROM {{MAIN_TABLE}} WHERE id = '" + id + "'";
+
+    PGresult* result = PQexec(conn, query.c_str());
+    if (PQresultStatus(result) != PGRES_TUPLES_OK || PQntuples(result) == 0) {
+        PQclear(result);
+        return {};
+    }
+
+    auto items = Parse(result);
+    PQclear(result);
+    return items.empty() ? {{STRUCT_NAME}}{} : items[0];
+}
+
+// ============================================================
+// Parse
+// ============================================================
+std::vector<{{STRUCT_NAME}}> {{CLASS_NAME}}::Parse(PGresult* result) {
+    std::vector<{{STRUCT_NAME}}> items;
+    int rows = PQntuples(result);
+    for (int i = 0; i < rows; ++i) {
+        {{STRUCT_NAME}} obj;
+{{PARSE_FIELDS}}        items.push_back(obj);
+    }
+    return items;
+}
+
+// ============================================================
+// Tables liées
+// ============================================================
+{{RELATED_IMPLS}}
+} // namespace Database

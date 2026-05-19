@@ -155,27 +155,6 @@ The docker-compose setup includes:
 ## Project Structure
 
 ```
-dnd-dm-toolbox/
-├── .github/
-│   └── workflows/          # GitHub Actions CI/CD pipelines
-├── src/                    # Source files
-│   ├── main.cpp           # Application entry point
-│   ├── models/            # D&D data models
-│   ├── ui/                # ImGui interface components
-│   └── generators/        # Procedural generation algorithms
-├── include/               # Header files
-├── libs/                  # External libraries (gitignored)
-│   ├── imgui/            # Dear ImGui (auto-downloaded)
-│   └── json/             # nlohmann/json (auto-downloaded)
-├── resources/            # Assets (fonts, icons, textures)
-├── data/                 # Game data (rules, monsters, spells)
-├── database/             # Database schemas and migrations
-│   └── init/            # Initialization SQL scripts
-├── CMakeLists.txt        # Build configuration
-├── Dockerfile            # Production container
-├── Dockerfile.dev        # Development container
-├── docker-compose.yml    # Multi-container orchestration
-└── setup_dependencies.sh # Dependency download script
 ```
 
 ## Development
@@ -219,17 +198,6 @@ This is a fan-made tool for personal use. Dungeons & Dragons and all related con
 
 ## Roadmap
 
-- [x] Project setup and infrastructure
-- [x] Docker containerization
-- [x] CI/CD pipeline
-- [ ] Character creation system
-- [ ] Combat tracker
-- [ ] Dungeon generator
-- [ ] Monster database
-- [ ] Spell compendium
-- [ ] Campaign manager
-- [ ] Network play support
-- [ ] Virtual tabletop integration
 
 ## Support
 

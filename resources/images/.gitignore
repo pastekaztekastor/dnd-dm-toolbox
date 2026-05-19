@@ -1,0 +1,18 @@
+# Les images WotC sont soumises au droit d'auteur de Wizards of the Coast.
+# Elles ne doivent PAS être versionnées dans ce dépôt.
+
+# Exclure tous les fichiers image
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.bmp
+*.tiff
+*.svg
+
+# Sauf le placeholder générique (non-WotC)
+!placeholder.png
+
+# Conserver la structure des dossiers
+!**/.gitkeep

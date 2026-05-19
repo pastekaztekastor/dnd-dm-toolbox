@@ -83,17 +83,13 @@ endif()
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/resources
      DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-# Copy data files
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data
-     DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
 # ============================================================
 # PLUGINS (Shared Libraries)
 # ============================================================
 
 # Fonction helper pour compiler un plugin
 function(add_plugin PLUGIN_NAME)
-    set(PLUGIN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/plugins_src/${PLUGIN_NAME})
+    set(PLUGIN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/plugins/${PLUGIN_NAME})
 
     # Sources du plugin
     file(GLOB PLUGIN_SOURCES ${PLUGIN_DIR}/*.cpp)
