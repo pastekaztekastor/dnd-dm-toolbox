@@ -136,3 +136,14 @@ CREATE TABLE IF NOT EXISTS race_equipements (
     equipement_id   UUID NOT NULL REFERENCES equipements(id) ON DELETE CASCADE
 );
 
+-- ===========================================================================
+-- TABLE: RACE_LANGUES
+-- Langues raciales maitrisé 
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS race_langues (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),    
+    race_id         UUID NOT NULL REFERENCES races(id) ON DELETE CASCADE,
+    nom_langue      VARCHAR(100) NOT NULL -- Ex: "Commun", "Elfe", "Nain"
+    typo_langue     VARCHAR(50) NOT NULL -- Ex: "Standard", "Exotique", etc.
+    description_langue TEXT -- Description de la langue (ex: "Langue commune utilisée par la plupart des habitants du monde", "Langue mystérieuse parlée par les elfes, avec une grammaire complexe et un vocabulaire riche en poésie", etc.)*
+);

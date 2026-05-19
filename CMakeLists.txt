@@ -11,15 +11,13 @@ option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 # Find required packages
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
-find_package(PostgreSQL REQUIRED)
-# Debian/Parrot/Ubuntu placent les headers dans un sous-dossier
-if(PostgreSQL_FOUND)
-    execute_process(COMMAND pg_config --includedir
-        OUTPUT_VARIABLE PG_INCLUDE_DIR
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
-    list(APPEND PostgreSQL_INCLUDE_DIRS ${PG_INCLUDE_DIR})
-endif()
 find_package(SQLite3 REQUIRED)
+
+# PostgreSQL via pg_config (portable sur toutes les distros)
+find_program(PG_CONFIG pg_config REQUIRED)
+execute_process(COMMAND ${PG_CONFIG} --includedir OUTPUT_VARIABLE PG_INCLUDE_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND ${PG_CONFIG} --libdir     OUTPUT_VARIABLE PG_LIB_DIR     OUTPUT_STRIP_TRAILING_WHITESPACE)
+find_library(PG_LIBRARY NAMES pq HINTS ${PG_LIB_DIR} REQUIRED)
 
 # Dear ImGui
 set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs/imgui)
@@ -38,8 +36,6 @@ target_include_directories(imgui PUBLIC
     ${IMGUI_DIR}/backends
 )
 target_link_libraries(imgui PUBLIC OpenGL::GL glfw)
-
-# Compiler ImGui avec -fPIC pour permettre son utilisation dans les plugins (.so)
 set_property(TARGET imgui PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 # nlohmann/json (header-only)
@@ -60,28 +56,26 @@ file(GLOB_RECURSE HEADERS
     include/**/*.h
 )
 
-# Use main_new.cpp as the entry point
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS} src/main_new.cpp)
 
-# Export symbols for plugins to use
 set_target_properties(${PROJECT_NAME} PROPERTIES ENABLE_EXPORTS ON)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${JSON_DIR}
+    ${PG_INCLUDE_DIR}
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     imgui
     OpenGL::GL
     glfw
-    PostgreSQL::PostgreSQL
+    ${PG_LIBRARY}
     SQLite::SQLite3
     nfd
     ${CMAKE_DL_LIBS}
 )
 
-# Platform specific settings
 if(UNIX AND NOT APPLE)
     target_link_libraries(${PROJECT_NAME} PRIVATE pthread)
 endif()
@@ -94,17 +88,13 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/resources
 # PLUGINS (Shared Libraries)
 # ============================================================
 
-# Fonction helper pour compiler un plugin
 function(add_plugin PLUGIN_NAME)
     set(PLUGIN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/plugins/${PLUGIN_NAME})
 
-    # Sources du plugin
     file(GLOB PLUGIN_SOURCES ${PLUGIN_DIR}/*.cpp)
 
-    # Créer la shared library
     add_library(${PLUGIN_NAME} SHARED ${PLUGIN_SOURCES})
 
-    # Include directories
     target_include_directories(${PLUGIN_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${JSON_DIR}
@@ -112,19 +102,16 @@ function(add_plugin PLUGIN_NAME)
         ${IMGUI_DIR}/backends
     )
 
-    # Link avec SQLite3 (pour OnSave/OnLoad) et ImGui
     target_link_libraries(${PLUGIN_NAME} PRIVATE
         SQLite::SQLite3
         imgui
     )
 
-    # Output dans plugins/
     set_target_properties(${PLUGIN_NAME} PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/plugins
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/plugins
     )
 
-    # Copier le manifest.json dans plugins/
     add_custom_command(TARGET ${PLUGIN_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
             ${PLUGIN_DIR}/${PLUGIN_NAME}.manifest.json
