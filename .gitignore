@@ -60,3 +60,4 @@ logs/
 node_modules/
 imgui.ini
 .todo
+build-output/

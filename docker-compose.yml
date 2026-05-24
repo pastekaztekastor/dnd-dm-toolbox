@@ -1,91 +1,32 @@
 version: '3.8'
 
 services:
-  # PostgreSQL database for campaign data
-  postgres:
-    image: postgres:15-alpine
-    container_name: dnd-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: dnduser
-      POSTGRES_PASSWORD: dndpass
-      POSTGRES_DB: dnd_toolbox
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./database/init:/docker-entrypoint-initdb.d
-    ports:
-      - "5432:5432"
-    networks:
-      - dnd-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dnduser"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # pgAdmin for database management
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: dnd-pgadmin
-    restart: unless-stopped
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@example.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    ports:
-      - "5050:80"
-    networks:
-      - dnd-network
-    depends_on:
-      - postgres
-
-  # Development environment
-  dev:
+  # Compilation du projet dans un environnement isolé
+  build:
     build:
       context: .
-      dockerfile: Dockerfile.dev
-    container_name: dnd-dev
+      dockerfile: Dockerfile
+      target: builder
     volumes:
-      - .:/workspace
-      - /tmp/.X11-unix:/tmp/.X11-unix
-    environment:
-      - DISPLAY=${DISPLAY}
-      - DATABASE_URL=postgresql://dnduser:dndpass@postgres:5432/dnd_toolbox
-    networks:
-      - dnd-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-    stdin_open: true
-    tty: true
-    privileged: true
+      - ./build-output:/output
+    command: >
+      sh -c "cp -r /app/build/DnD_DM_Toolbox /output/ &&
+             cp -r /app/build/resources /output/ &&
+             cp -r /app/build/plugins /output/"
+    profiles:
+      - build
 
-  # Production application
+  # Lancement de l'application (nécessite X11 sur l'hôte)
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: dnd-app
+      target: runtime
     volumes:
-      - ./data:/app/data
       - /tmp/.X11-unix:/tmp/.X11-unix
+      - ./dnd_toolbox.db:/app/dnd_toolbox.db
     environment:
       - DISPLAY=${DISPLAY}
-      - DATABASE_URL=postgresql://dnduser:dndpass@postgres:5432/dnd_toolbox
-    networks:
-      - dnd-network
-    depends_on:
-      postgres:
-        condition: service_healthy
+    network_mode: host
     profiles:
-      - production
-
-networks:
-  dnd-network:
-    driver: bridge
-
-volumes:
-  postgres_data:
-  pgadmin_data:
+      - run

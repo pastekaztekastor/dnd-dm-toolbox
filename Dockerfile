@@ -1,73 +1,65 @@
-# Multi-stage build for DnD DM Toolbox
+# Image de compilation - toutes les dépendances sont embarquées
+FROM ubuntu:24.04 AS builder
 
-# Stage 1: Build environment
-FROM ubuntu:22.04 AS builder
-
-# Avoid interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install build dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
     git \
+    pkg-config \
     libglfw3-dev \
     libgl1-mesa-dev \
+    libsqlite3-dev \
+    libgtk-3-dev \
     libx11-dev \
     libxrandr-dev \
     libxinerama-dev \
     libxcursor-dev \
     libxi-dev \
-    pkg-config \
+    libwayland-dev \
+    wayland-protocols \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
 WORKDIR /app
 
-# Copy project files
+# Copier le projet (libs gitignorées seront téléchargées ci-dessous)
 COPY . .
 
-# Download dependencies
-RUN chmod +x setup_dependencies.sh && ./setup_dependencies.sh
+# Télécharger imgui (gitignorée)
+RUN git clone --depth 1 https://github.com/ocornut/imgui.git libs/imgui
 
-# Build the project
-RUN mkdir -p build && cd build && \
-    cmake .. && \
-    make -j$(nproc)
+# Télécharger nlohmann/json (gitignorée)
+RUN mkdir -p libs/json/include/nlohmann && \
+    curl -sL https://github.com/nlohmann/json/releases/latest/download/json.hpp \
+         -o libs/json/include/nlohmann/json.hpp
 
-# Stage 2: Runtime environment with X11 support
-FROM ubuntu:22.04 AS runtime
+# Initialiser le submodule nfd
+RUN git submodule update --init --recursive
+
+# Compiler
+RUN mkdir build && cd build && cmake .. && make -j$(nproc)
+
+# ──────────────────────────────────────────────────────────────
+# Image runtime légère (pour lancer l'app via X11)
+FROM ubuntu:24.04 AS runtime
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     libglfw3 \
     libgl1-mesa-glx \
+    libsqlite3-0 \
+    libgtk-3-0 \
     libx11-6 \
-    libxrandr2 \
-    libxinerama1 \
-    libxcursor1 \
-    libxi6 \
-    x11-apps \
     && rm -rf /var/lib/apt/lists/*
-
-# Create app user
-RUN useradd -m -s /bin/bash dmuser
 
 WORKDIR /app
 
-# Copy built executable and resources from builder
-COPY --from=builder /app/build/DnD_DM_Toolbox /app/
-COPY --from=builder /app/build/resources /app/resources
-COPY --from=builder /app/build/data /app/data
+COPY --from=builder /app/build/DnD_DM_Toolbox ./
+COPY --from=builder /app/build/resources      ./resources
+COPY --from=builder /app/build/plugins        ./plugins
 
-# Change ownership
-RUN chown -R dmuser:dmuser /app
-
-USER dmuser
-
-# Set display for X11
 ENV DISPLAY=:0
 
 CMD ["./DnD_DM_Toolbox"]
