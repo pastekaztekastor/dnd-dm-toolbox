@@ -1,5 +1,6 @@
 # Build directories
 build/
+build-local/
 cmake-build-*/
 bin/
 obj/
@@ -61,3 +62,6 @@ node_modules/
 imgui.ini
 .todo
 build-output/
+
+# Code/données mis de côté pendant la refonte du moteur (à réintégrer via branches dédiées)
+_setaside/

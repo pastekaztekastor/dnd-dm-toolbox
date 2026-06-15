@@ -1,0 +1,10 @@
+build/
+cmake-build-*/
+build-output/
+libs/
+_setaside/
+.git/
+.vscode/
+.idea/
+*.db
+*.log

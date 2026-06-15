@@ -6,10 +6,6 @@
 #include <nlohmann/json.hpp>
 #include "ToolBase.h"
 
-namespace Database {
-    class DatabaseManager;
-}
-
 namespace Core {
     class EventBus;
     class Logger;
@@ -94,7 +90,6 @@ namespace Core {
      * ToolRegistry registry;
      * registry.SetEventBus(&eventBus);
      * registry.SetLogger(&logger);
-     * registry.SetDatabaseManager(&dbManager);
      *
      * // Charger tous les plugins
      * registry.LoadAllPlugins("plugins/");
@@ -187,7 +182,6 @@ namespace Core {
         // Setters pour les ressources partagées
         void SetEventBus(EventBus* bus) { eventBus = bus; }
         void SetLogger(Logger* log) { logger = log; }
-        void SetDatabaseManager(Database::DatabaseManager* db) { dbManager = db; }
 
     private:
         std::map<std::string, LoadedPlugin> loadedPlugins;  // pluginID -> plugin
@@ -196,7 +190,6 @@ namespace Core {
         // Ressources partagées (injectées dans chaque instance)
         EventBus* eventBus = nullptr;
         Logger* logger = nullptr;
-        Database::DatabaseManager* dbManager = nullptr;
 
         /**
          * @brief Lit un fichier manifest.json

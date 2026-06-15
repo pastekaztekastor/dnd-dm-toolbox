@@ -9,7 +9,6 @@
 #include "EventBus.h"
 #include "Logger.h"
 #include "SaveFileManager.h"
-#include "../database/DatabaseManager.h"
 
 namespace Core {
 
@@ -78,7 +77,6 @@ namespace Core {
         // SYSTÈMES CORE
         // ============================================================
 
-        std::unique_ptr<Database::DatabaseManager> dbManager;   // DB PostgreSQL
         std::unique_ptr<ToolRegistry> toolRegistry;             // Registre de plugins
         std::unique_ptr<EventBus> eventBus;                     // Bus d'événements
         std::unique_ptr<Logger> logger;                         // Log global
@@ -117,11 +115,6 @@ namespace Core {
          * @brief Initialise ImGui
          */
         bool InitImGui();
-
-        /**
-         * @brief Connecte à la base de données PostgreSQL
-         */
-        bool InitDatabase();
 
         /**
          * @brief Charge tous les plugins

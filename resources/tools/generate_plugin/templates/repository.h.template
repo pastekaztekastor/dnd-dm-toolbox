@@ -1,0 +1,19 @@
+#pragma once
+
+#include <string>
+#include <vector>
+#include <sqlite3.h>
+
+namespace PLUGIN_NAMESPACE {
+
+REPO_STRUCTS
+class REPO_CLASS_NAME {
+public:
+    explicit REPO_CLASS_NAME(sqlite3* db);
+
+REPO_METHOD_DECLS
+private:
+    sqlite3* db;
+};
+
+} // namespace PLUGIN_NAMESPACE

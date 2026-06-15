@@ -1,0 +1,8 @@
+#include "REPO_CLASS_NAME.h"
+
+namespace PLUGIN_NAMESPACE {
+
+REPO_CLASS_NAME::REPO_CLASS_NAME(sqlite3* db) : db(db) {}
+
+REPO_METHOD_IMPLS
+} // namespace PLUGIN_NAMESPACE

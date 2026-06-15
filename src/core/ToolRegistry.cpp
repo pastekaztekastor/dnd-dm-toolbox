@@ -1,7 +1,6 @@
 #include "../../include/core/ToolRegistry.h"
 #include "../../include/core/EventBus.h"
 #include "../../include/core/Logger.h"
-#include "../../include/database/DatabaseManager.h"
 #include <iostream>
 #include <filesystem>
 #include <fstream>
@@ -167,7 +166,6 @@ ToolBase* ToolRegistry::CreateToolInstance(const std::string& toolType) {
     instance->SetInstanceID(GenerateInstanceID());
     instance->SetEventBus(eventBus);
     instance->SetLogger(logger);
-    instance->SetDatabaseManager(dbManager);
 
     // Enregistrer l'instance
     instanceToPlugin[instance] = toolType;

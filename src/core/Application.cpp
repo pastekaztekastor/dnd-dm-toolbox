@@ -49,12 +49,6 @@ bool Application::Init() {
     toolRegistry->SetEventBus(eventBus.get());
     toolRegistry->SetLogger(logger.get());
 
-    // Initialiser la base de données
-    if (!InitDatabase()) {
-        std::cerr << "Attention: Base de données non disponible" << std::endl;
-        // Non-bloquant, on continue sans DB
-    }
-
     // Charger les plugins
     if (!LoadPlugins()) {
         std::cerr << "Attention: Aucun plugin chargé" << std::endl;
@@ -116,11 +110,6 @@ void Application::Shutdown() {
 
     // Décharger les plugins
     toolRegistry->UnloadAllPlugins();
-
-    // Déconnecter la DB
-    if (dbManager) {
-        dbManager->Disconnect();
-    }
 
     // Cleanup ImGui
     if (window) {
@@ -305,21 +294,6 @@ bool Application::InitImGui() {
 
     std::cout << "ImGui initialisé" << std::endl;
     return true;
-}
-
-bool Application::InitDatabase() {
-    dbManager = std::make_unique<Database::DatabaseManager>();
-
-    bool connected = dbManager->Connect("dnd_toolbox.db");
-
-    if (connected) {
-        toolRegistry->SetDatabaseManager(dbManager.get());
-        std::cout << "Base de données SQLite connectée" << std::endl;
-        return true;
-    } else {
-        std::cerr << "Base de données non disponible (mode hors-ligne)" << std::endl;
-        return false;
-    }
 }
 
 bool Application::LoadPlugins() {

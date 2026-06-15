@@ -41,7 +41,6 @@ add_subdirectory(libs/nfd)
 # Main executable
 file(GLOB_RECURSE SOURCES
     src/core/*.cpp
-    src/database/*.cpp
     src/ui/*.cpp
 )
 
@@ -50,7 +49,7 @@ file(GLOB_RECURSE HEADERS
     include/**/*.h
 )
 
-add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS} src/main_new.cpp)
+add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS} src/main.cpp)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES ENABLE_EXPORTS ON)
 
@@ -112,7 +111,6 @@ function(add_plugin PLUGIN_NAME)
 endfunction()
 
 # Compiler les plugins
-add_plugin(character_creator)
 add_plugin(note)
 add_plugin(dice_roller)
 add_plugin(log_viewer)

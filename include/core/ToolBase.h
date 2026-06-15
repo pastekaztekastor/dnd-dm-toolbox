@@ -5,11 +5,6 @@
 #include <nlohmann/json.hpp>
 #include <sqlite3.h>
 
-// Forward declarations
-namespace Database {
-    class DatabaseManager;
-}
-
 namespace Core {
     class EventBus;
     class Logger;
@@ -265,14 +260,12 @@ namespace Core {
 
         void SetInstanceID(const std::string& id) { instanceID = id; }
         void SetEventBus(EventBus* bus) { eventBus = bus; }
-        void SetDatabaseManager(Database::DatabaseManager* db) { dbManager = db; }
         void SetLogger(Logger* log) { logger = log; }
 
     protected:
         // Ressources partagées (injectées par ToolRegistry)
         std::string instanceID;                     // UUID unique de cette instance
         EventBus* eventBus = nullptr;               // Bus d'événements
-        Database::DatabaseManager* dbManager = nullptr; // DB PostgreSQL (read-only)
         Logger* logger = nullptr;                   // Système de log
 
         // État de la fenêtre
