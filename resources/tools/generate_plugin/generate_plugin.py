@@ -109,11 +109,31 @@ def singular(name: str) -> str:
 
 
 # ============================================================
+# Helper de templating : remplace une ligne-placeholder par un
+# bloc (éventuellement multi-lignes), ou supprime la ligne si
+# le bloc est vide.
+# ============================================================
+
+def replace_line_or_remove(text: str, placeholder: str, value: str) -> str:
+    lines = text.split('\n')
+    out = []
+    for line in lines:
+        if placeholder in line:
+            if value:
+                out.append(line.replace(placeholder, value))
+            # sinon: on supprime la ligne entièrement
+        else:
+            out.append(line)
+    return '\n'.join(out)
+
+
+# ============================================================
 # Génération du plugin (Tool + manifest)
 # ============================================================
 
 def generate_plugin_files(plugin_dir: Path, templates_dir: Path, plugin_id: str,
-                           name: str, category: str, description: str, class_name: str):
+                           name: str, category: str, description: str, class_name: str,
+                           lifecycle: dict | None = None):
     replacements = {
         'PLUGIN_ID': plugin_id,
         'PLUGIN_NAME_DISPLAY': name,
@@ -131,9 +151,72 @@ def generate_plugin_files(plugin_dir: Path, templates_dir: Path, plugin_id: str,
     source = render((templates_dir / 'TemplateTool.cpp').read_text(encoding='utf-8'))
     manifest = render((templates_dir / 'template.manifest.json').read_text(encoding='utf-8'))
 
+    lifecycle = lifecycle or {}
+    header = replace_line_or_remove(header, 'REPO_INCLUDE_LINE', lifecycle.get('header_include', ''))
+    header = replace_line_or_remove(header, 'REPO_MEMBERS_LINE', lifecycle.get('header_members', ''))
+    source = replace_line_or_remove(source, 'SOURCE_REPO_INCLUDE_LINE', lifecycle.get('source_includes', ''))
+    source = replace_line_or_remove(source, 'ONCREATE_DB_INIT_LINE', lifecycle.get('oncreate', ''))
+    source = replace_line_or_remove(source, 'ONDESTROY_DB_CLOSE_LINE', lifecycle.get('ondestroy', ''))
+
     (plugin_dir / f'{class_name}Tool.h').write_text(header, encoding='utf-8')
     (plugin_dir / f'{class_name}Tool.cpp').write_text(source, encoding='utf-8')
     (plugin_dir / f'{plugin_id}.manifest.json').write_text(manifest, encoding='utf-8')
+
+
+# ============================================================
+# Boilerplate de cycle de vie (ouverture DB, init schéma, repo)
+# Injecté dans Tool.h / Tool.cpp uniquement si --schema est fourni.
+# ============================================================
+
+def generate_lifecycle_snippets(plugin_id: str, repo_class: str, namespace: str, first_table: str) -> dict:
+    qualified_repo = f'{namespace}::{repo_class}'
+    header_include = f'#include "{repo_class}.h"\n#include <memory>'
+
+    header_members = (
+        f'    sqlite3* pluginDb = nullptr;\n'
+        f'    std::unique_ptr<{qualified_repo}> repo;\n'
+    )
+
+    source_includes = '#include <fstream>\n#include <sstream>'
+
+    oncreate = (
+        f'    // Ouvrir/créer la base de données du plugin\n'
+        f'    sqlite3_open("{plugin_id}.db", &pluginDb);\n'
+        f'\n'
+        f'    // Initialiser le schéma si la table \'{first_table}\' n\'existe pas encore\n'
+        f'    bool needsInit = true;\n'
+        f'    sqlite3_stmt* checkStmt;\n'
+        f'    if (sqlite3_prepare_v2(pluginDb, "SELECT name FROM sqlite_master WHERE type=\'table\' AND name=\'{first_table}\'", -1, &checkStmt, nullptr) == SQLITE_OK) {{\n'
+        f'        needsInit = sqlite3_step(checkStmt) != SQLITE_ROW;\n'
+        f'        sqlite3_finalize(checkStmt);\n'
+        f'    }}\n'
+        f'\n'
+        f'    if (needsInit) {{\n'
+        f'        std::ifstream schemaFile("plugins/{plugin_id}_schema.sql");\n'
+        f'        if (schemaFile) {{\n'
+        f'            std::stringstream buffer;\n'
+        f'            buffer << schemaFile.rdbuf();\n'
+        f'            sqlite3_exec(pluginDb, buffer.str().c_str(), nullptr, nullptr, nullptr);\n'
+        f'        }}\n'
+        f'    }}\n'
+        f'\n'
+        f'    repo = std::make_unique<{qualified_repo}>(pluginDb);\n'
+    )
+
+    ondestroy = (
+        f'    if (pluginDb) {{\n'
+        f'        sqlite3_close(pluginDb);\n'
+        f'        pluginDb = nullptr;\n'
+        f'    }}'
+    )
+
+    return {
+        'header_include': header_include,
+        'header_members': header_members,
+        'source_includes': source_includes,
+        'oncreate': oncreate,
+        'ondestroy': ondestroy,
+    }
 
 
 # ============================================================
@@ -150,9 +233,14 @@ def generate_repository(plugin_dir: Path, templates_dir: Path, tables: list, cla
 
     for table in tables:
         cols = table['columns']
+        has_id = any(c['name'] == 'id' for c in cols)
         struct_name = pascal(singular(table['name'])) + 'Data'
+        singular_pascal = pascal(singular(table['name']))
         load_all = f'LoadAll{pascal(table["name"])}'
-        load_one = f'Load{pascal(singular(table["name"]))}ById'
+        load_one = f'Load{singular_pascal}ById'
+        insert_one = f'Insert{singular_pascal}'
+        update_one = f'Update{singular_pascal}'
+        delete_one = f'Delete{singular_pascal}ById'
 
         # Struct
         structs += f'struct {struct_name} {{\n'
@@ -163,6 +251,10 @@ def generate_repository(plugin_dir: Path, templates_dir: Path, tables: list, cla
         # Déclarations
         method_decls += f'    std::vector<{struct_name}> {load_all}();\n'
         method_decls += f'    {struct_name} {load_one}(const std::string& id);\n'
+        method_decls += f'    void {insert_one}(const {struct_name}& data);\n'
+        if has_id:
+            method_decls += f'    void {update_one}(const {struct_name}& data);\n'
+            method_decls += f'    void {delete_one}(const std::string& id);\n'
 
         select_cols = ', '.join(c['name'] for c in cols)
 
@@ -181,6 +273,16 @@ def generate_repository(plugin_dir: Path, templates_dir: Path, tables: list, cla
                 elif c['cpp_type'] == 'double':
                     lines.append(f'{indent}{var}.{c["name"]} = sqlite3_column_double(stmt, {i});')
             return '\n'.join(lines)
+
+        def column_bind(var: str, col: dict, index: int) -> str:
+            if col['cpp_type'] == 'std::string':
+                return f'sqlite3_bind_text(stmt, {index}, {var}.{col["name"]}.c_str(), -1, SQLITE_TRANSIENT);'
+            elif col['cpp_type'] == 'int':
+                return f'sqlite3_bind_int(stmt, {index}, {var}.{col["name"]});'
+            elif col['cpp_type'] == 'bool':
+                return f'sqlite3_bind_int(stmt, {index}, {var}.{col["name"]} ? 1 : 0);'
+            else:  # double
+                return f'sqlite3_bind_double(stmt, {index}, {var}.{col["name"]});'
 
         method_impls += (
             f'std::vector<{struct_name}> {repo_class}::{load_all}() {{\n'
@@ -211,6 +313,57 @@ def generate_repository(plugin_dir: Path, templates_dir: Path, tables: list, cla
             f'    return obj;\n'
             f'}}\n\n'
         )
+
+        # Insert
+        insert_cols = ', '.join(c['name'] for c in cols)
+        placeholders = ', '.join('?' for _ in cols)
+        insert_binds = '\n'.join(
+            f'        {column_bind("data", c, i + 1)}' for i, c in enumerate(cols)
+        )
+        method_impls += (
+            f'void {repo_class}::{insert_one}(const {struct_name}& data) {{\n'
+            f'    const char* sql = "INSERT INTO {table["name"]} ({insert_cols}) VALUES ({placeholders})";\n'
+            f'    sqlite3_stmt* stmt;\n'
+            f'    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK) {{\n'
+            f'{insert_binds}\n'
+            f'        sqlite3_step(stmt);\n'
+            f'        sqlite3_finalize(stmt);\n'
+            f'    }}\n'
+            f'}}\n\n'
+        )
+
+        # Update / Delete (nécessitent une colonne 'id')
+        if has_id:
+            non_id_cols = [c for c in cols if c['name'] != 'id']
+            id_col = next(c for c in cols if c['name'] == 'id')
+            set_clause = ', '.join(f'{c["name"]} = ?' for c in non_id_cols)
+            update_binds = [column_bind('data', c, i + 1) for i, c in enumerate(non_id_cols)]
+            update_binds.append(column_bind('data', id_col, len(non_id_cols) + 1))
+            update_binds_str = '\n'.join(f'        {b}' for b in update_binds)
+
+            method_impls += (
+                f'void {repo_class}::{update_one}(const {struct_name}& data) {{\n'
+                f'    const char* sql = "UPDATE {table["name"]} SET {set_clause} WHERE id = ?";\n'
+                f'    sqlite3_stmt* stmt;\n'
+                f'    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK) {{\n'
+                f'{update_binds_str}\n'
+                f'        sqlite3_step(stmt);\n'
+                f'        sqlite3_finalize(stmt);\n'
+                f'    }}\n'
+                f'}}\n\n'
+            )
+
+            method_impls += (
+                f'void {repo_class}::{delete_one}(const std::string& id) {{\n'
+                f'    const char* sql = "DELETE FROM {table["name"]} WHERE id = ?";\n'
+                f'    sqlite3_stmt* stmt;\n'
+                f'    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK) {{\n'
+                f'        sqlite3_bind_text(stmt, 1, id.c_str(), -1, SQLITE_TRANSIENT);\n'
+                f'        sqlite3_step(stmt);\n'
+                f'        sqlite3_finalize(stmt);\n'
+                f'    }}\n'
+                f'}}\n\n'
+            )
 
     header = (templates_dir / 'repository.h.template').read_text(encoding='utf-8')
     source = (templates_dir / 'repository.cpp.template').read_text(encoding='utf-8')
@@ -292,15 +445,11 @@ def main():
         print(f'Erreur : {plugin_dir} existe déjà.', file=sys.stderr)
         sys.exit(1)
 
-    plugin_dir.mkdir(parents=True)
-
-    generate_plugin_files(plugin_dir, templates_dir, args.plugin_id, args.name,
-                           args.category, args.description, class_name)
-
-    print(f'Plugin créé : {plugin_dir}')
-    print(f'  {class_name}Tool.h / {class_name}Tool.cpp')
-    print(f'  {args.plugin_id}.manifest.json')
-
+    # Si un schéma est fourni, on le parse en amont pour pouvoir générer
+    # le boilerplate d'ouverture DB / init schéma directement dans Tool.h/.cpp
+    tables = []
+    repo_class = f'{class_name}Repository'
+    lifecycle = None
     if args.schema:
         schema_path = Path(args.schema)
         if not schema_path.exists():
@@ -312,7 +461,19 @@ def main():
             print('Erreur : aucune CREATE TABLE trouvée dans le schéma.', file=sys.stderr)
             sys.exit(1)
 
-        repo_class = generate_repository(plugin_dir, templates_dir, tables, class_name)
+        lifecycle = generate_lifecycle_snippets(args.plugin_id, repo_class, class_name, tables[0]['name'])
+
+    plugin_dir.mkdir(parents=True)
+
+    generate_plugin_files(plugin_dir, templates_dir, args.plugin_id, args.name,
+                           args.category, args.description, class_name, lifecycle)
+
+    print(f'Plugin créé : {plugin_dir}')
+    print(f'  {class_name}Tool.h / {class_name}Tool.cpp')
+    print(f'  {args.plugin_id}.manifest.json')
+
+    if args.schema:
+        generate_repository(plugin_dir, templates_dir, tables, class_name)
 
         schema_dest = plugin_dir / f'{args.plugin_id}_schema.sql'
         schema_dest.write_text(schema_path.read_text(encoding='utf-8'), encoding='utf-8')
@@ -327,10 +488,10 @@ def main():
         print(f'\nAttention : ajoutez manuellement add_plugin({args.plugin_id}) dans CMakeLists.txt')
 
     print('\nProchaines étapes :')
-    print(f'  1. Implémenter {class_name}Tool::Render() (et OnCreate/OnSave/OnLoad)')
+    print(f'  1. Implémenter {class_name}Tool::Render() (et compléter OnSave/OnLoad)')
     if args.schema:
-        print(f'  2. Dans OnCreate(), ouvrir {args.plugin_id}.db (sqlite3_open), exécuter')
-        print(f'     {args.plugin_id}_schema.sql si la DB est neuve, puis instancier {class_name}Repository')
+        print(f'  2. OnCreate() ouvre déjà {args.plugin_id}.db et initialise le schéma : ')
+        print(f'     ajuster {repo_class} (Insert/Update/Delete générés) et utiliser repo->LoadAll...() dans Render()')
     print('  3. Relancer cmake (le plugin est auto-détecté via GLOB)')
 
 

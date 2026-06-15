@@ -3,6 +3,7 @@
 #include "../../include/core/ToolBase.h"
 #include <string>
 #include <vector>
+REPO_INCLUDE_LINE
 
 /**
  * @brief PLUGIN_NAME_DISPLAY - PLUGIN_DESCRIPTION
@@ -41,6 +42,7 @@ private:
     // État du plugin
     // ============================================================
 
+REPO_MEMBERS_LINE
     // TODO: Ajouter vos variables d'état ici
     // Exemple:
     // std::string myData;

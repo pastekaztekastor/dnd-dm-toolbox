@@ -4,6 +4,7 @@
 #include <imgui.h>
 #include <nlohmann/json.hpp>
 #include <chrono>
+SOURCE_REPO_INCLUDE_LINE
 
 PLUGIN_CLASS_NAMETool::PLUGIN_CLASS_NAMETool() {
     // Constructeur
@@ -22,6 +23,7 @@ void PLUGIN_CLASS_NAMETool::OnCreate() {
     // Appelé quand l'instance est créée
     // TODO: S'abonner aux événements, initialiser des ressources, etc.
 
+ONCREATE_DB_INIT_LINE
     // Exemple: S'abonner à un événement
     // if (eventBus) {
     //     eventBus->Subscribe("some.event", [this](const Core::Event& e) {
@@ -33,6 +35,7 @@ void PLUGIN_CLASS_NAMETool::OnCreate() {
 void PLUGIN_CLASS_NAMETool::OnDestroy() {
     // Appelé quand l'instance est détruite
     // TODO: Nettoyer les ressources, se désabonner, etc.
+ONDESTROY_DB_CLOSE_LINE
 }
 
 void PLUGIN_CLASS_NAMETool::OnSave(sqlite3* db) {

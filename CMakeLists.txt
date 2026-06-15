@@ -108,6 +108,17 @@ function(add_plugin PLUGIN_NAME)
             ${PLUGIN_DIR}/${PLUGIN_NAME}.manifest.json
             ${CMAKE_CURRENT_BINARY_DIR}/plugins/${PLUGIN_NAME}.manifest.json
     )
+
+    # Copier les éventuels schémas/seeds SQL du plugin (chargés à l'exécution)
+    file(GLOB PLUGIN_SQL_FILES ${PLUGIN_DIR}/*.sql)
+    foreach(SQL_FILE ${PLUGIN_SQL_FILES})
+        get_filename_component(SQL_FILENAME ${SQL_FILE} NAME)
+        add_custom_command(TARGET ${PLUGIN_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+                ${SQL_FILE}
+                ${CMAKE_CURRENT_BINARY_DIR}/plugins/${SQL_FILENAME}
+        )
+    endforeach()
 endfunction()
 
 # Compiler les plugins
