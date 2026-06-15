@@ -419,18 +419,97 @@ def find_project_root() -> Path:
     return Path.cwd()
 
 
+# ============================================================
+# Mode interactif (lancé sans argument)
+# ============================================================
+
+def ask(question: str, default: str = '') -> str:
+    suffix = f' [{default}]' if default else ''
+    answer = input(f'{question}{suffix} : ').strip()
+    return answer if answer else default
+
+
+def ask_yes_no(question: str, default: bool = False) -> bool:
+    suffix = ' [o/N]' if not default else ' [O/n]'
+    answer = input(f'{question}{suffix} : ').strip().lower()
+    if not answer:
+        return default
+    return answer in ('o', 'oui', 'y', 'yes')
+
+
+def interactive_args() -> argparse.Namespace:
+    print('=== Génération d\'un nouveau plugin ===\n')
+
+    while True:
+        plugin_id = ask('ID du plugin (snake_case, ex: race_manager)')
+        if re.match(r'^[a-z][a-z0-9_]*$', plugin_id):
+            break
+        print('Erreur : doit être en snake_case (minuscules, chiffres, underscores)\n')
+
+    name = ask('Nom affiché (ex: Gestionnaire de Races)')
+    while not name:
+        name = ask('Nom affiché (obligatoire)')
+
+    category = ask('Catégorie de menu', default='Outils')
+    description = ask('Description courte', default='')
+
+    schema = None
+    if ask_yes_no('Ce plugin a-t-il sa propre base SQLite (avec un schéma .sql) ?'):
+        schemas_dir = Path(__file__).resolve().parent / 'schemas'
+        schemas_dir.mkdir(exist_ok=True)
+        default_schema = schemas_dir / f'{plugin_id}_schema.sql'
+
+        if not default_schema.exists():
+            default_schema.write_text(
+                f'-- Schéma SQLite du plugin {plugin_id}\n'
+                f'-- Adaptez cette table de base ou ajoutez-en d\'autres (CREATE TABLE en syntaxe SQLite)\n'
+                f'\n'
+                f'CREATE TABLE {plugin_id} (\n'
+                f'    id TEXT PRIMARY KEY,\n'
+                f'    nom TEXT NOT NULL,\n'
+                f'    description TEXT\n'
+                f');\n',
+                encoding='utf-8'
+            )
+            print(f'\nFichier créé : {default_schema}')
+        else:
+            print(f'\nFichier trouvé : {default_schema}')
+
+        print('Adaptez ce schéma si besoin (CREATE TABLE en syntaxe SQLite),')
+        print('puis appuyez sur Entrée pour continuer.\n')
+
+        while True:
+            schema = ask('Chemin du fichier .sql', default=str(default_schema))
+            schema_path = Path(schema) if schema else None
+            if not schema_path or not schema_path.exists():
+                print(f'Erreur : fichier non trouvé : {schema}\n')
+                continue
+            if not parse_tables(schema_path.read_text(encoding='utf-8')):
+                print(f'\nAucun CREATE TABLE valide trouvé dans {schema_path.name}.')
+                print('Éditez le fichier puis appuyez sur Entrée pour continuer.\n')
+                continue
+            break
+
+    print()
+    return argparse.Namespace(plugin_id=plugin_id, name=name, category=category,
+                               description=description, schema=schema)
+
+
 def main():
-    parser = argparse.ArgumentParser(
-        description='Scaffold un nouveau plugin Core::ToolBase (et son repository SQLite).',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=__doc__
-    )
-    parser.add_argument('plugin_id', help='ID du plugin (ex: race_manager)')
-    parser.add_argument('--name', required=True, help='Nom affiché du plugin')
-    parser.add_argument('--category', default='Outils', help='Catégorie de menu (défaut: Outils)')
-    parser.add_argument('--description', default='', help='Description courte')
-    parser.add_argument('--schema', help='Fichier .sql (SQLite) décrivant la DB du plugin')
-    args = parser.parse_args()
+    if len(sys.argv) == 1:
+        args = interactive_args()
+    else:
+        parser = argparse.ArgumentParser(
+            description='Scaffold un nouveau plugin Core::ToolBase (et son repository SQLite).',
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+            epilog=__doc__
+        )
+        parser.add_argument('plugin_id', help='ID du plugin (ex: race_manager)')
+        parser.add_argument('--name', required=True, help='Nom affiché du plugin')
+        parser.add_argument('--category', default='Outils', help='Catégorie de menu (défaut: Outils)')
+        parser.add_argument('--description', default='', help='Description courte')
+        parser.add_argument('--schema', help='Fichier .sql (SQLite) décrivant la DB du plugin')
+        args = parser.parse_args()
 
     if not re.match(r'^[a-z][a-z0-9_]*$', args.plugin_id):
         print('Erreur : <plugin_id> doit être en snake_case (ex: race_manager)', file=sys.stderr)
@@ -496,4 +575,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except (KeyboardInterrupt, EOFError):
+        print('\nAnnulé.')
+        sys.exit(1)
