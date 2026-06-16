@@ -282,12 +282,16 @@ bool ToolRegistry::ReadManifest(const std::string& manifestPath, PluginManifest&
             }
         }
 
+        // autoload
+        if (json.contains("autoload")) outManifest.autoload = json["autoload"];
+
         // Dependencies (anciennement "requires" mais C++20 réserve ce mot-clé)
         if (json.contains("requires")) {
             auto& req = json["requires"];
-            if (req.contains("database")) outManifest.dependencies.database = req["database"];
-            if (req.contains("event_bus")) outManifest.dependencies.event_bus = req["event_bus"];
-            if (req.contains("logger")) outManifest.dependencies.logger = req["logger"];
+            if (req.contains("database"))    outManifest.dependencies.database    = req["database"];
+            if (req.contains("event_bus"))   outManifest.dependencies.event_bus   = req["event_bus"];
+            if (req.contains("logger"))      outManifest.dependencies.logger      = req["logger"];
+            if (req.contains("service_bus")) outManifest.dependencies.service_bus = req["service_bus"];
         }
 
         // Permissions

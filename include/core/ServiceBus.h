@@ -87,6 +87,11 @@ namespace Core {
         bool HasService(const std::string& name) const;
 
         /**
+         * @brief Retourne les noms de tous les services actuellement enregistrés
+         */
+        std::vector<std::string> GetServiceNames() const;
+
+        /**
          * @brief Active/désactive le mode debug (affiche les appels sur stdout)
          */
         void SetDebugMode(bool enabled) { debugMode = enabled; }

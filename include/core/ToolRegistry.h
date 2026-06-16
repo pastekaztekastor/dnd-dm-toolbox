@@ -59,6 +59,8 @@ namespace Core {
             std::vector<ServiceSchema> calls;
         } services;
 
+        bool autoload = false; // Charger en fond au démarrage (services disponibles sans ouvrir la fenêtre)
+
         struct UI {
             std::string window_title;       // Titre de la fenêtre
             int default_width = 800;

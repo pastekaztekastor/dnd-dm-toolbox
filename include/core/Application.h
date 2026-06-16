@@ -88,7 +88,8 @@ namespace Core {
         // INSTANCES DE TOOLS
         // ============================================================
 
-        std::vector<ToolBase*> toolInstances;       // Tous les tools ouverts
+        std::vector<ToolBase*> toolInstances;       // Tools avec fenêtre ouverte
+        std::vector<ToolBase*> backgroundInstances; // Plugins autoload (services actifs, fenêtre fermée)
 
         // ============================================================
         // FICHIERS RÉCENTS
