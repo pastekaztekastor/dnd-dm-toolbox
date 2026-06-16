@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+struct ImGuiInputTextCallbackData;
+
 /**
  * @brief Note - Bloque note de votre aventure au format texte (futurement au format md)
  *
@@ -41,14 +43,22 @@ private:
     // État du plugin
     // ============================================================
 
-    char noteBuffer[1024 * 16];  // Buffer de 16KB pour le texte
+    char noteBuffer[1024 * 16];
+    bool previewMode = false;
 
-    // ============================================================
-    // Méthodes privées
-    // ============================================================
+    // Autocomplétion @plugin.alias
+    struct AcItem { std::string token; std::string label; };
+    std::vector<AcItem> acItems;
+    bool        acLoaded    = false;
+    bool        acActive    = false;
+    int         acAtPos     = -1;   // position du @ dans noteBuffer
+    std::string acFilter;           // ce qui est tapé après @
+    bool        acApply     = false;
+    std::string acApplyText;        // token sélectionné à insérer
 
-    /**
-     * @brief Retourne le timestamp actuel en secondes (pour les logs)
-     */
     double GetCurrentTime();
+    void   LoadCompletions();
+
+public:
+    static int InputCb(ImGuiInputTextCallbackData* data);
 };

@@ -1,6 +1,7 @@
 #include "RaceDd55Tool.h"
 #include "../../include/core/Logger.h"
 #include "../../include/core/EventBus.h"
+#include "../../include/ui/MarkdownRenderer.h"
 #include <imgui.h>
 #include <nlohmann/json.hpp>
 #include <chrono>
@@ -108,9 +109,35 @@ void RaceDd55Tool::OnCreate() {
             return { {"subraces", arr} };
         })
     );
+
+    // Navigation externe par alias : race.open {"alias": "elfe"}
+    if (eventBus) {
+        openSubID = eventBus->Subscribe("race.open", [this](const Core::Event& e) {
+            std::string alias = e.data.value("alias", "");
+            if (alias.empty()) return;
+            for (int i = 0; i < (int)races.size(); ++i) {
+                if (races[i].alias == alias) {
+                    SetOpen(true);
+                    SelectRace(i, false);
+                    return;
+                }
+            }
+            for (int i = 0; i < (int)subraces.size(); ++i) {
+                if (subraces[i].alias == alias) {
+                    SetOpen(true);
+                    SelectRace(i, true);
+                    return;
+                }
+            }
+        });
+    }
 }
 
 void RaceDd55Tool::OnDestroy() {
+    if (eventBus && openSubID >= 0) {
+        eventBus->Unsubscribe(openSubID);
+        openSubID = -1;
+    }
     for (auto id : registeredServices) UnregisterService(id);
     registeredServices.clear();
     repo.reset();
@@ -307,7 +334,8 @@ void RaceDd55Tool::Render() {
     ImGui::End();
 }
 
-static void render_race_sections(RaceDd55::RaceData& race, bool defaultOpen, const char* scope) {
+static void render_race_sections(RaceDd55::RaceData& race, bool defaultOpen, const char* scope,
+                                  const UI::LinkCallback& onLink) {
     ImGuiTreeNodeFlags flags = defaultOpen ? ImGuiTreeNodeFlags_DefaultOpen : 0;
     char hdr[64];
     snprintf(hdr, sizeof(hdr), "Présentation##%s", scope);
@@ -315,7 +343,7 @@ static void render_race_sections(RaceDd55::RaceData& race, bool defaultOpen, con
         for (auto& p : race.presentations) {
             if (!p.titre.empty())
                 ImGui::TextColored({.8f,.7f,.4f,1}, "%s", p.titre.c_str());
-            ImGui::TextWrapped("%s", p.texte.c_str());
+            UI::RenderMarkdown(p.texte, onLink);
             ImGui::Spacing();
         }
     }
@@ -323,7 +351,7 @@ static void render_race_sections(RaceDd55::RaceData& race, bool defaultOpen, con
     if (!race.traits.empty() && ImGui::CollapsingHeader(hdr, flags)) {
         for (auto& t : race.traits) {
             ImGui::TextColored({.5f,.8f,1,1}, "%s", t.titre.c_str());
-            ImGui::TextWrapped("%s", t.texte.c_str());
+            UI::RenderMarkdown(t.texte, onLink);
             ImGui::Spacing();
         }
     }
@@ -331,13 +359,16 @@ static void render_race_sections(RaceDd55::RaceData& race, bool defaultOpen, con
     if (!race.noms.empty() && ImGui::CollapsingHeader(hdr, flags)) {
         for (auto& n : race.noms) {
             ImGui::TextColored({.8f,.7f,.4f,1}, "%s", n.titre.c_str());
-            ImGui::TextWrapped("%s", n.texte.c_str());
+            UI::RenderMarkdown(n.texte, onLink);
             ImGui::Spacing();
         }
     }
 }
 
 void RaceDd55Tool::RenderDetailPanel(RaceDd55::RaceData& race) {
+    auto linkCb = [this](const std::string& plugin, const std::string& alias) {
+        PublishEvent(plugin + ".open", {{"alias", alias}});
+    };
     // Boutons d'action
     if (ImGui::Button("Modifier"))
         StartEdit(race, false);
@@ -393,14 +424,14 @@ void RaceDd55Tool::RenderDetailPanel(RaceDd55::RaceData& race) {
         if (!race.presentations.empty() || !race.traits.empty() || !race.noms.empty()) {
             ImGui::TextColored({.8f,.6f,.2f,1}, "Spécifique à %s", race.nom.c_str());
             ImGui::Spacing();
-            render_race_sections(race, true, "sub");
+            render_race_sections(race, true, "sub", linkCb);
         }
 
         // Sections héritées du parent (fermées par défaut)
         ImGui::Spacing();
         std::string parentHeader = std::string("Hérité de ") + parent.nom + "##par";
         if (ImGui::CollapsingHeader(parentHeader.c_str())) {
-            render_race_sections(parent, false, "par");
+            render_race_sections(parent, false, "par", linkCb);
         }
 
     } else {
@@ -419,7 +450,7 @@ void RaceDd55Tool::RenderDetailPanel(RaceDd55::RaceData& race) {
             ImGui::TextWrapped("Langues : %s", race.liste_langues.c_str());
 
         ImGui::Spacing(); ImGui::Separator(); ImGui::Spacing();
-        render_race_sections(race, true, "main");
+        render_race_sections(race, true, "main", linkCb);
     }
 }
 

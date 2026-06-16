@@ -145,7 +145,27 @@ Pour ce qui est du Workflow on dois avoir la cinématique suivante :
 - Choix des sorts
 - Evolution (à la monté de niveau)
 
-## TODO (ouais c'est chelou.)
 Je suis sur la création du plugin de perso que je reprden depuis 0 j'ai pas de fichier qui me créer le template. Bref zebi. bon il faudra que je recompile j'ai plus les plugin qui sont chargé. par contre c'est bien moins moche. 
 
 il faut vraiement que mon text en base gère les aliase et les table
+
+# 20260616 post refont archi
+
+## Niveau dans le Logger
+
+Après avoir aussi refont le fonctionnement du bus event je pense qu'il faut aussi faire une prio pour les log. Dans le sence ou il y a des log de modif, certain sont nescéssaire pour conprendre les action de la campagne d'autre non. Bref il y a plusieur niveaux de lecture. Pour moi il faut 
+
+- Comprehension de la campagne, s'ils sont remonter ont doit avoir le déroulé de la campagne 
+- Edite de data
+- Mise en place de campagne 
+- Tout le reste 
+
+Je pense que c'est pas vraiment pas bien découpé mais c'est un découpage fonctionnel. 
+
+## Ajout d'un mode edition/session
+
+Peu être mêttre un mode edition / session pour différencier les logs des deux phase qui sont défférent avec un retour visuel dans la barre de l'app pour toujours savoir dans quelle mode on est. Maybe les deux mode peuvent changer le comportement des plugin genre tu peux pas modifié les race en mode session. 
+
+## Pour le plugin de classe mettre en event
+
+- getClasseEvolveRequired : qui retourne toute les attribut / compétence d'une classe en fonction des prérqui : niveau min, choix de build, etc. 

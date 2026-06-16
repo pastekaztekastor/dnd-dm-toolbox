@@ -45,6 +45,9 @@ private:
     // Services enregistrés sur le ServiceBus (pour désenregistrement dans OnDestroy)
     std::vector<Core::ServiceID> registeredServices;
 
+    // Abonnement EventBus pour race.open (navigation externe par alias)
+    int openSubID = -1;
+
     void SelectRace(int idx, bool isSub);
     void StartEdit(const RaceDd55::RaceData& race, bool isNew = false);
     void SaveEdit();

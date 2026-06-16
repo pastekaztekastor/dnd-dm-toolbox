@@ -43,7 +43,12 @@
         }
       }
     ],
-    "subscribes": []
+    "subscribes": [
+      {
+        "name": "race.open",
+        "description": "Naviguer vers une race par son alias (ex: {\"alias\": \"elfe\"})"
+      }
+    ]
   },
 
   "services": {

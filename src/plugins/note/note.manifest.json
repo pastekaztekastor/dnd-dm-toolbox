@@ -13,15 +13,17 @@
 
   "requires": {
     "database": false,
-    "event_bus": false,
-    "logger": true
+    "event_bus": true,
+    "logger": true,
+    "service_bus": true
   },
 
   "permissions": {
     "read_database": false,
     "write_campaign": true,
-    "publish_events": false,
-    "subscribe_events": false
+    "publish_events": true,
+    "subscribe_events": false,
+    "call_services": true
   },
 
   "events": {
