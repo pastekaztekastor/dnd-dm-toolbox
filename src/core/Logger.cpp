@@ -188,19 +188,22 @@ std::string Logger::GenerateDisplayText(const LogEntry& entry) {
         toolName = it->second;
     }
 
-    // Utiliser le formatteur personnalisé si disponible
-    auto formatterIt = formatters.find(entry.actionType);
+    // Si le plugin a fourni un résumé explicite, l'utiliser directement
     std::string content;
-
-    if (formatterIt != formatters.end()) {
-        content = formatterIt->second(entry);
+    if (entry.data.contains("_summary") && entry.data["_summary"].is_string()) {
+        content = entry.data["_summary"].get<std::string>();
     } else {
-        // Formatteur par défaut
-        auto defaultIt = formatters.find("default");
-        if (defaultIt != formatters.end()) {
-            content = defaultIt->second(entry);
+        // Utiliser le formatteur personnalisé si disponible
+        auto formatterIt = formatters.find(entry.actionType);
+        if (formatterIt != formatters.end()) {
+            content = formatterIt->second(entry);
         } else {
-            content = entry.actionType + ": " + entry.data.dump();
+            auto defaultIt = formatters.find("default");
+            if (defaultIt != formatters.end()) {
+                content = defaultIt->second(entry);
+            } else {
+                content = entry.actionType + ": " + entry.data.dump();
+            }
         }
     }
 

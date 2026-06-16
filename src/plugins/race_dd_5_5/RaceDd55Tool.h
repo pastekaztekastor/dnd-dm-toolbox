@@ -39,7 +39,11 @@ private:
     bool editMode  = false;
     bool isNewRace = false;
     RaceDd55::RaceData editRace;
+    RaceDd55::RaceData originalRace;  // snapshot avant modification (pour le log de diff)
     std::string editError;
+
+    // Services enregistrés sur le ServiceBus (pour désenregistrement dans OnDestroy)
+    std::vector<Core::ServiceID> registeredServices;
 
     void SelectRace(int idx, bool isSub);
     void StartEdit(const RaceDd55::RaceData& race, bool isNew = false);

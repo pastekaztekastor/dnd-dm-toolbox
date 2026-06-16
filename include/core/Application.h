@@ -7,6 +7,7 @@
 #include "ToolBase.h"
 #include "ToolRegistry.h"
 #include "EventBus.h"
+#include "ServiceBus.h"
 #include "Logger.h"
 #include "SaveFileManager.h"
 
@@ -77,10 +78,11 @@ namespace Core {
         // SYSTÈMES CORE
         // ============================================================
 
-        std::unique_ptr<ToolRegistry> toolRegistry;             // Registre de plugins
-        std::unique_ptr<EventBus> eventBus;                     // Bus d'événements
-        std::unique_ptr<Logger> logger;                         // Log global
-        std::unique_ptr<SaveFileManager> saveFileManager;       // Gestion .dnd
+        std::unique_ptr<ToolRegistry>   toolRegistry;             // Registre de plugins
+        std::unique_ptr<EventBus>       eventBus;                 // Bus d'événements (pub/sub async)
+        std::unique_ptr<ServiceBus>     serviceBus;               // Bus de services (request/response sync)
+        std::unique_ptr<Logger>         logger;                   // Log global
+        std::unique_ptr<SaveFileManager> saveFileManager;         // Gestion .dnd
 
         // ============================================================
         // INSTANCES DE TOOLS

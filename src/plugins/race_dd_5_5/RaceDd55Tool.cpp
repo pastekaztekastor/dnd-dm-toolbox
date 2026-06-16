@@ -48,9 +48,71 @@ void RaceDd55Tool::OnCreate() {
     repo  = std::make_unique<RaceDd55::RaceDd55Repository>(pluginDb);
     races = repo->LoadAllRaces();
     if (!races.empty()) SelectRace(0, false);
+
+    // Enregistrer les services inter-plugins
+    registeredServices.push_back(
+        RegisterService("race.getAll", [this](const nlohmann::json&) -> nlohmann::json {
+            nlohmann::json arr = nlohmann::json::array();
+            for (const auto& r : races)
+                arr.push_back({ {"id", r.id}, {"nom", r.nom}, {"alias", r.alias},
+                                {"race_parent_id", r.race_parent_id}, {"description", r.description} });
+            return { {"races", arr} };
+        })
+    );
+
+    registeredServices.push_back(
+        RegisterService("race.getById", [this](const nlohmann::json& params) -> nlohmann::json {
+            std::string id = params.value("id", "");
+            if (id.empty()) return { {"error", "paramètre 'id' manquant"} };
+            RaceDd55::RaceData r = repo->LoadRaceById(id);
+            if (r.id.empty()) return { {"error", "race introuvable : " + id} };
+            repo->LoadPresentations(r);
+            repo->LoadTraits(r);
+            repo->LoadNoms(r);
+            nlohmann::json race = {
+                {"id", r.id}, {"race_parent_id", r.race_parent_id},
+                {"nom", r.nom}, {"alias", r.alias},
+                {"description", r.description}, {"aide_joueur", r.aide_joueur},
+                {"bonus_forces", r.bonus_forces}, {"bonus_dexterite", r.bonus_dexterite},
+                {"bonus_constitution", r.bonus_constitution}, {"bonus_intelligence", r.bonus_intelligence},
+                {"bonus_sagesse", r.bonus_sagesse}, {"bonus_charisme", r.bonus_charisme},
+                {"age_adulte", r.age_adulte}, {"age_max", r.age_max},
+                {"vitesse_base", r.vitesse_base}, {"liste_langues", r.liste_langues},
+                {"source", r.source}, {"source_ver", r.source_ver}
+            };
+            nlohmann::json pres = nlohmann::json::array();
+            for (auto& p : r.presentations)
+                pres.push_back({ {"titre", p.titre}, {"texte", p.texte}, {"ordre", p.ordre} });
+            race["presentations"] = pres;
+            nlohmann::json traits = nlohmann::json::array();
+            for (auto& t : r.traits)
+                traits.push_back({ {"titre", t.titre}, {"texte", t.texte}, {"ordre", t.ordre} });
+            race["traits"] = traits;
+            nlohmann::json noms = nlohmann::json::array();
+            for (auto& n : r.noms)
+                noms.push_back({ {"titre", n.titre}, {"texte", n.texte}, {"ordre", n.ordre} });
+            race["noms"] = noms;
+            return { {"race", race} };
+        })
+    );
+
+    registeredServices.push_back(
+        RegisterService("race.getSubRaces", [this](const nlohmann::json& params) -> nlohmann::json {
+            std::string parent_id = params.value("parent_id", "");
+            if (parent_id.empty()) return { {"error", "paramètre 'parent_id' manquant"} };
+            auto subs = repo->LoadSubRaces(parent_id);
+            nlohmann::json arr = nlohmann::json::array();
+            for (const auto& r : subs)
+                arr.push_back({ {"id", r.id}, {"race_parent_id", r.race_parent_id},
+                                {"nom", r.nom}, {"alias", r.alias}, {"description", r.description} });
+            return { {"subraces", arr} };
+        })
+    );
 }
 
 void RaceDd55Tool::OnDestroy() {
+    for (auto id : registeredServices) UnregisterService(id);
+    registeredServices.clear();
     repo.reset();
     if (pluginDb) { sqlite3_close(pluginDb); pluginDb = nullptr; }
 }
@@ -289,6 +351,8 @@ void RaceDd55Tool::RenderDetailPanel(RaceDd55::RaceData& race) {
         ImGui::SameLine();
     }
     if (ImGui::Button("Supprimer")) {
+        Log("race.deleted", { {"_summary", "Suppression : " + race.nom},
+                              {"race_id", race.id}, {"race_nom", race.nom} });
         repo->DeleteRaceById(race.id);
         races    = repo->LoadAllRaces();
         subraces.clear();
@@ -512,12 +576,19 @@ void RaceDd55Tool::SelectRace(int idx, bool isSub) {
         repo->LoadTraits(races[idx]);
         repo->LoadNoms(races[idx]);
         subraces = repo->LoadSubRaces(races[idx].id);
+        Log("race.selected", { {"_summary", "Sélection : " + races[idx].nom},
+                               {"race_id", races[idx].id}, {"race_nom", races[idx].nom} });
+        PublishEvent("race.selected", {
+            {"race_id",    races[idx].id},
+            {"race_nom",   races[idx].nom},
+            {"race_alias", races[idx].alias},
+            {"is_subrace", false},
+            {"parent_id",  ""}
+        });
     } else {
         selectedIdx   = idx;
         selectedIsSub = true;
         selectedId    = subraces[idx].id;
-        // parentRaceIdx reste inchangé (défini lors de la sélection du parent)
-        // S'assurer que les données du parent sont bien chargées
         if (parentRaceIdx >= 0 && parentRaceIdx < (int)races.size()
             && races[parentRaceIdx].presentations.empty()) {
             repo->LoadPresentations(races[parentRaceIdx]);
@@ -527,13 +598,23 @@ void RaceDd55Tool::SelectRace(int idx, bool isSub) {
         repo->LoadPresentations(subraces[idx]);
         repo->LoadTraits(subraces[idx]);
         repo->LoadNoms(subraces[idx]);
+        Log("race.selected", { {"_summary", "Sélection : " + subraces[idx].nom},
+                               {"race_id", subraces[idx].id}, {"race_nom", subraces[idx].nom} });
+        PublishEvent("race.selected", {
+            {"race_id",    subraces[idx].id},
+            {"race_nom",   subraces[idx].nom},
+            {"race_alias", subraces[idx].alias},
+            {"is_subrace", true},
+            {"parent_id",  subraces[idx].race_parent_id}
+        });
     }
 }
 
 void RaceDd55Tool::StartEdit(const RaceDd55::RaceData& race, bool isNew) {
-    editRace   = race;
-    isNewRace  = isNew;
-    editMode   = true;
+    editRace    = race;
+    originalRace = race;
+    isNewRace   = isNew;
+    editMode    = true;
     editError.clear();
     // Pour une modification, on s'assure d'avoir les données secondaires
     if (!isNew && !race.id.empty() && repo) {
@@ -587,6 +668,58 @@ void RaceDd55Tool::SaveEdit() {
     repo->SaveNoms(editRace.id, editRace.noms);
 
     repo->Commit();
+
+    if (isNewRace) {
+        Log("race.created", { {"_summary", "Création : " + editRace.nom},
+                              {"race_id", editRace.id}, {"race_nom", editRace.nom} });
+    } else {
+        nlohmann::json changes = nlohmann::json::object();
+        auto diffStr = [&](const char* k, const std::string& a, const std::string& b)
+            { if (a != b) changes[k] = { {"avant", a}, {"apres", b} }; };
+        auto diffInt = [&](const char* k, int a, int b)
+            { if (a != b) changes[k] = { {"avant", a}, {"apres", b} }; };
+        auto diffFlt = [&](const char* k, float a, float b)
+            { if (a != b) changes[k] = { {"avant", a}, {"apres", b} }; };
+
+        diffStr("nom",            originalRace.nom,            editRace.nom);
+        diffStr("race_parent_id", originalRace.race_parent_id, editRace.race_parent_id);
+        diffStr("liste_langues",  originalRace.liste_langues,  editRace.liste_langues);
+        diffStr("description",    originalRace.description,    editRace.description);
+        diffStr("aide_joueur",    originalRace.aide_joueur,    editRace.aide_joueur);
+        diffInt("bonus_forces",        originalRace.bonus_forces,        editRace.bonus_forces);
+        diffInt("bonus_dexterite",     originalRace.bonus_dexterite,     editRace.bonus_dexterite);
+        diffInt("bonus_constitution",  originalRace.bonus_constitution,  editRace.bonus_constitution);
+        diffInt("bonus_intelligence",  originalRace.bonus_intelligence,  editRace.bonus_intelligence);
+        diffInt("bonus_sagesse",       originalRace.bonus_sagesse,       editRace.bonus_sagesse);
+        diffInt("bonus_charisme",      originalRace.bonus_charisme,      editRace.bonus_charisme);
+        diffInt("age_adulte",    originalRace.age_adulte,    editRace.age_adulte);
+        diffInt("age_max",       originalRace.age_max,       editRace.age_max);
+        diffFlt("vitesse_base",  originalRace.vitesse_base,  editRace.vitesse_base);
+        if (originalRace.presentations.size() != editRace.presentations.size())
+            changes["presentations"] = { {"avant", originalRace.presentations.size()},
+                                         {"apres", editRace.presentations.size()} };
+        if (originalRace.traits.size() != editRace.traits.size())
+            changes["traits"] = { {"avant", originalRace.traits.size()},
+                                  {"apres", editRace.traits.size()} };
+        if (originalRace.noms.size() != editRace.noms.size())
+            changes["noms"] = { {"avant", originalRace.noms.size()},
+                                {"apres", editRace.noms.size()} };
+
+        std::string summary = "Modification : " + editRace.nom;
+        if (!changes.empty()) {
+            summary += " (";
+            bool first = true;
+            for (auto& [k, _] : changes.items()) {
+                if (!first) summary += ", ";
+                summary += k;
+                first = false;
+            }
+            summary += ")";
+        }
+        Log("race.updated", { {"_summary", summary},
+                              {"race_id", editRace.id}, {"race_nom", editRace.nom},
+                              {"modifications", changes} });
+    }
 
     // Rechargement
     races = repo->LoadAllRaces();

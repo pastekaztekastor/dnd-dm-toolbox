@@ -40,14 +40,16 @@ bool Application::Init() {
     }
 
     // Initialiser les systèmes core
-    eventBus = std::make_unique<EventBus>();
-    logger = std::make_unique<Logger>();
+    eventBus    = std::make_unique<EventBus>();
+    serviceBus  = std::make_unique<ServiceBus>();
+    logger      = std::make_unique<Logger>();
     saveFileManager = std::make_unique<SaveFileManager>();
     toolRegistry = std::make_unique<ToolRegistry>();
 
     // Injecter les dépendances dans le registry
     toolRegistry->SetEventBus(eventBus.get());
     toolRegistry->SetLogger(logger.get());
+    toolRegistry->SetServiceBus(serviceBus.get());
 
     // Charger les plugins
     if (!LoadPlugins()) {

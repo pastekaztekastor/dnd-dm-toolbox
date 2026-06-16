@@ -28,22 +28,36 @@ namespace Core {
         } menu;
 
         struct Requires {
-            bool database = false;
-            bool event_bus = false;
-            bool logger = false;
+            bool database    = false;
+            bool event_bus   = false;
+            bool logger      = false;
+            bool service_bus = false;
         } dependencies;
 
         struct Permissions {
-            bool read_database = false;
-            bool write_campaign = false;
-            bool publish_events = false;
+            bool read_database    = false;
+            bool write_campaign   = false;
+            bool publish_events   = false;
             bool subscribe_events = false;
+            bool provide_services = false;
+            bool call_services    = false;
         } permissions;
 
         struct Events {
             std::vector<std::string> publishes;   // Événements publiés
             std::vector<std::string> subscribes;  // Événements écoutés
         } events;
+
+        struct ServiceSchema {
+            std::string    name;
+            std::string    description;
+            nlohmann::json params_schema;
+            nlohmann::json returns_schema;
+        };
+        struct Services {
+            std::vector<ServiceSchema> provides;
+            std::vector<ServiceSchema> calls;
+        } services;
 
         struct UI {
             std::string window_title;       // Titre de la fenêtre
@@ -182,14 +196,16 @@ namespace Core {
         // Setters pour les ressources partagées
         void SetEventBus(EventBus* bus) { eventBus = bus; }
         void SetLogger(Logger* log) { logger = log; }
+        void SetServiceBus(ServiceBus* bus) { serviceBus = bus; }
 
     private:
         std::map<std::string, LoadedPlugin> loadedPlugins;  // pluginID -> plugin
         std::map<ToolBase*, std::string> instanceToPlugin;  // instance -> pluginID
 
         // Ressources partagées (injectées dans chaque instance)
-        EventBus* eventBus = nullptr;
-        Logger* logger = nullptr;
+        EventBus*   eventBus   = nullptr;
+        Logger*     logger     = nullptr;
+        ServiceBus* serviceBus = nullptr;
 
         /**
          * @brief Lit un fichier manifest.json
