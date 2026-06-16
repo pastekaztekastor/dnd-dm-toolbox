@@ -5,6 +5,8 @@
   "version": "1.0.0",
   "author": "D&D DM Toolbox Team",
 
+  "autoload": true,
+
   "menu": {
     "category": "Gestionnaire",
     "order": 10,

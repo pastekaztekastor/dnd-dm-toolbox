@@ -1,4 +1,5 @@
 #include "../../include/core/ServiceBus.h"
+#include <algorithm>
 #include <iostream>
 
 namespace Core {
@@ -73,6 +74,15 @@ std::vector<nlohmann::json> ServiceBus::QueryService(const std::string& name,
         }
     }
     return results;
+}
+
+std::vector<std::string> ServiceBus::GetServiceNames() const {
+    std::vector<std::string> names;
+    names.reserve(services.size());
+    for (auto& [name, regs] : services)
+        if (!regs.empty()) names.push_back(name);
+    std::sort(names.begin(), names.end());
+    return names;
 }
 
 bool ServiceBus::HasService(const std::string& name) const {

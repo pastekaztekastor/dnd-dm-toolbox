@@ -107,6 +107,12 @@ void Application::Shutdown() {
     }
     toolInstances.clear();
 
+    // Fermer les instances en fond (autoload)
+    for (auto* tool : backgroundInstances) {
+        toolRegistry->DestroyToolInstance(tool);
+    }
+    backgroundInstances.clear();
+
     // Fermer le fichier de campagne
     saveFileManager->Close();
 
@@ -315,13 +321,49 @@ bool Application::LoadPlugins() {
 
     int count = toolRegistry->LoadAllPlugins(pluginsDir);
 
-    if (count > 0) {
-        std::cout << "" << count << " plugin(s) chargé(s)" << std::endl;
-        return true;
-    } else {
+    if (count == 0) {
         std::cout << "Aucun plugin trouvé dans " << pluginsDir << std::endl;
         return false;
     }
+
+    std::cout << count << " plugin(s) chargé(s)" << std::endl;
+
+    // Enregistrer le service registry.getManifests sur le ServiceBus
+    serviceBus->RegisterService("registry.getManifests", [this](const nlohmann::json&) {
+        nlohmann::json plugins = nlohmann::json::array();
+        for (auto& [id, plugin] : toolRegistry->GetLoadedPlugins()) {
+            nlohmann::json entry;
+            entry["id"]       = plugin.manifest.id;
+            entry["name"]     = plugin.manifest.name;
+            entry["autoload"] = plugin.manifest.autoload;
+
+            nlohmann::json svcs = nlohmann::json::array();
+            for (auto& s : plugin.manifest.services.provides) {
+                nlohmann::json svc;
+                svc["name"]        = s.name;
+                svc["description"] = s.description;
+                svc["params"]      = s.params_schema;
+                svcs.push_back(svc);
+            }
+            entry["services"] = svcs;
+            plugins.push_back(entry);
+        }
+        return nlohmann::json{ {"plugins", plugins} };
+    });
+
+    // Créer les instances en fond pour les plugins autoload
+    for (auto& [id, plugin] : toolRegistry->GetLoadedPlugins()) {
+        if (plugin.manifest.autoload) {
+            ToolBase* instance = toolRegistry->CreateToolInstance(id);
+            if (instance) {
+                instance->SetOpen(false);
+                backgroundInstances.push_back(instance);
+                std::cout << "Autoload: " << id << " chargé en fond" << std::endl;
+            }
+        }
+    }
+
+    return true;
 }
 
 void Application::LoadRecentFiles() {
@@ -607,6 +649,11 @@ void Application::RenderWelcomeScreen() {
 // ============================================================
 
 void Application::RenderTools() {
+    // Render les instances en fond (Render() retourne immédiatement si !isOpen)
+    for (auto* tool : backgroundInstances) {
+        if (tool) tool->Render();
+    }
+
     // Render tous les tools ouverts
     for (auto* tool : toolInstances) {
         if (tool && tool->IsOpen()) {
@@ -754,15 +801,24 @@ void Application::CloseCampaign() {
 }
 
 void Application::OpenTool(const std::string& toolType) {
-    // Créer l'instance
-    ToolBase* tool = toolRegistry->CreateToolInstance(toolType);
+    // Si le plugin a une instance en fond, juste afficher sa fenêtre
+    for (auto* bg : backgroundInstances) {
+        if (bg && bg->GetID() == toolType) {
+            if (saveFileManager->IsOpen() && !bg->IsOpen()) {
+                bg->OnLoad(saveFileManager->GetDatabase());
+            }
+            bg->SetOpen(true);
+            std::cout << "Tool (fond) réouvert: " << toolType << std::endl;
+            return;
+        }
+    }
 
+    // Sinon créer une instance normale
+    ToolBase* tool = toolRegistry->CreateToolInstance(toolType);
     if (tool) {
-        // Charger les données sauvegardées si une campagne est ouverte
         if (saveFileManager->IsOpen()) {
             tool->OnLoad(saveFileManager->GetDatabase());
         }
-
         toolInstances.push_back(tool);
         std::cout << "Tool ouvert: " << toolType << std::endl;
     }

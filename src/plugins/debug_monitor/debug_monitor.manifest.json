@@ -1,0 +1,62 @@
+{
+  "id": "debug_monitor",
+  "name": "Moniteur / Console de debug",
+  "description": "Console de debug : appels ServiceBus, écoute EventBus, inspection en temps réel",
+  "version": "1.0.0",
+  "author": "D&D DM Toolbox Team",
+
+  "menu": {
+    "category": "Debug",
+    "order": 10,
+    "shortcuts": []
+  },
+
+  "requires": {
+    "database": false,
+    "event_bus": true,
+    "logger": true,
+    "service_bus": true
+  },
+
+  "permissions": {
+    "read_database": false,
+    "write_campaign": false,
+    "publish_events": true,
+    "subscribe_events": true,
+    "provide_services": false,
+    "call_services": true
+  },
+
+  "events": {
+    "publishes": [
+      {
+        "name": "*",
+        "description": "Peut publier n'importe quel événement (outil de debug)"
+      }
+    ],
+    "subscribes": [
+      {
+        "name": "*",
+        "description": "Peut s'abonner à n'importe quel événement (outil de debug)"
+      }
+    ]
+  },
+
+  "services": {
+    "provides": [],
+    "calls": [
+      {
+        "name": "*",
+        "description": "Peut appeler n'importe quel service enregistré (outil de debug)"
+      }
+    ]
+  },
+
+  "ui": {
+    "window_title": "Moniteur / Console de debug",
+    "default_width": 860,
+    "default_height": 620,
+    "resizable": true,
+    "can_dock": true
+  }
+}
