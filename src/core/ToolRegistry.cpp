@@ -166,6 +166,7 @@ ToolBase* ToolRegistry::CreateToolInstance(const std::string& toolType) {
     instance->SetInstanceID(GenerateInstanceID());
     instance->SetEventBus(eventBus);
     instance->SetLogger(logger);
+    instance->SetServiceBus(serviceBus);
 
     // Enregistrer l'instance
     instanceToPlugin[instance] = toolType;
@@ -292,25 +293,47 @@ bool ToolRegistry::ReadManifest(const std::string& manifestPath, PluginManifest&
         // Permissions
         if (json.contains("permissions")) {
             auto& perm = json["permissions"];
-            if (perm.contains("read_database")) outManifest.permissions.read_database = perm["read_database"];
-            if (perm.contains("write_campaign")) outManifest.permissions.write_campaign = perm["write_campaign"];
-            if (perm.contains("publish_events")) outManifest.permissions.publish_events = perm["publish_events"];
+            if (perm.contains("read_database"))    outManifest.permissions.read_database    = perm["read_database"];
+            if (perm.contains("write_campaign"))   outManifest.permissions.write_campaign   = perm["write_campaign"];
+            if (perm.contains("publish_events"))   outManifest.permissions.publish_events   = perm["publish_events"];
             if (perm.contains("subscribe_events")) outManifest.permissions.subscribe_events = perm["subscribe_events"];
+            if (perm.contains("provide_services")) outManifest.permissions.provide_services = perm["provide_services"];
+            if (perm.contains("call_services"))    outManifest.permissions.call_services    = perm["call_services"];
         }
 
-        // Events
+        // Events (supporte les deux formes : string pure et objet {name, ...})
         if (json.contains("events")) {
             auto& events = json["events"];
+            auto extractName = [](const nlohmann::json& entry) -> std::string {
+                return entry.is_string() ? entry.get<std::string>() : entry.value("name", "");
+            };
             if (events.contains("publishes")) {
-                for (const auto& event : events["publishes"]) {
-                    outManifest.events.publishes.push_back(event);
-                }
+                for (const auto& e : events["publishes"])
+                    outManifest.events.publishes.push_back(extractName(e));
             }
             if (events.contains("subscribes")) {
-                for (const auto& event : events["subscribes"]) {
-                    outManifest.events.subscribes.push_back(event);
-                }
+                for (const auto& e : events["subscribes"])
+                    outManifest.events.subscribes.push_back(extractName(e));
             }
+        }
+
+        // Services
+        if (json.contains("services")) {
+            auto& svc = json["services"];
+            auto parseList = [](const nlohmann::json& arr) {
+                std::vector<PluginManifest::ServiceSchema> result;
+                for (const auto& entry : arr) {
+                    PluginManifest::ServiceSchema s;
+                    s.name           = entry.value("name", "");
+                    s.description    = entry.value("description", "");
+                    if (entry.contains("params"))  s.params_schema  = entry["params"];
+                    if (entry.contains("returns")) s.returns_schema = entry["returns"];
+                    result.push_back(std::move(s));
+                }
+                return result;
+            };
+            if (svc.contains("provides")) outManifest.services.provides = parseList(svc["provides"]);
+            if (svc.contains("calls"))    outManifest.services.calls    = parseList(svc["calls"]);
         }
 
         // UI

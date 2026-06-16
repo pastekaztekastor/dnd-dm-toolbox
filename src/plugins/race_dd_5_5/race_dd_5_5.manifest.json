@@ -1,0 +1,85 @@
+{
+  "id": "race_dd_5_5",
+  "name": "Gestionnaire de race DD 5.5",
+  "description": "Gestionnaire des races de Donjon et Dragon 5.5 du Manuel du joueur",
+  "version": "1.0.0",
+  "author": "D&D DM Toolbox Team",
+
+  "menu": {
+    "category": "Gestionnaire",
+    "order": 10,
+    "shortcuts": []
+  },
+
+  "requires": {
+    "database": false,
+    "event_bus": true,
+    "logger": true,
+    "service_bus": true
+  },
+
+  "permissions": {
+    "read_database": false,
+    "write_campaign": true,
+    "publish_events": true,
+    "subscribe_events": false,
+    "provide_services": true,
+    "call_services": false
+  },
+
+  "events": {
+    "publishes": [
+      {
+        "name": "race.selected",
+        "description": "Émis quand l'utilisateur sélectionne une race dans la liste",
+        "schema": {
+          "race_id":    "string — identifiant de la race",
+          "race_nom":   "string — nom affiché",
+          "race_alias": "string — alias/slug",
+          "is_subrace": "boolean — true si c'est une sous-race",
+          "parent_id":  "string — id de la race parente, vide si race de base"
+        }
+      }
+    ],
+    "subscribes": []
+  },
+
+  "services": {
+    "provides": [
+      {
+        "name": "race.getAll",
+        "description": "Retourne la liste de toutes les races parentes (sans sous-races)",
+        "params": {},
+        "returns": {
+          "races": "array<{ id, nom, alias, race_parent_id, description }>"
+        }
+      },
+      {
+        "name": "race.getById",
+        "description": "Retourne une race complète par son identifiant, avec présentations, traits et noms",
+        "params": { "id": "string" },
+        "returns": {
+          "race":  "object — données complètes de la race",
+          "error": "string? — message d'erreur si absent"
+        }
+      },
+      {
+        "name": "race.getSubRaces",
+        "description": "Retourne les sous-races d'une race parente",
+        "params": { "parent_id": "string" },
+        "returns": {
+          "subraces": "array<{ id, race_parent_id, nom, alias, description }>"
+        }
+      }
+    ],
+    "calls": []
+  },
+
+  "ui": {
+    "window_title": "Gestionnaire de race DD 5.5",
+    "default_width": 960,
+    "default_height": 620,
+    "resizable": true,
+    "can_dock": true
+  }
+}

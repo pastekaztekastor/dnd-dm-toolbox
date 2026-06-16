@@ -2,8 +2,11 @@
 
 #include <string>
 #include <functional>
+#include <optional>
+#include <vector>
 #include <nlohmann/json.hpp>
 #include <sqlite3.h>
+#include "ServiceBus.h"
 
 namespace Core {
     class EventBus;
@@ -206,6 +209,42 @@ namespace Core {
         void PublishEvent(const std::string& eventType, const nlohmann::json& data);
 
         /**
+         * @brief Enregistre un service sur le ServiceBus
+         *
+         * @param name    Nom du service (ex: "race.getAll")
+         * @param handler Fonction (json params) → json result
+         * @return ServiceID à conserver pour UnregisterService dans OnDestroy
+         */
+        ServiceID RegisterService(const std::string& name, ServiceHandler handler);
+
+        /**
+         * @brief Retire un service précédemment enregistré
+         *
+         * @param id ID retourné par RegisterService
+         */
+        void UnregisterService(ServiceID id);
+
+        /**
+         * @brief Appelle un service d'un autre plugin (request/response synchrone)
+         *
+         * @param name   Nom du service
+         * @param params Paramètres JSON
+         * @return Résultat JSON, ou nullopt si le service n'existe pas
+         */
+        std::optional<nlohmann::json> CallService(const std::string& name,
+                                                  const nlohmann::json& params);
+
+        /**
+         * @brief Interroge tous les providers d'un service (broadcast query)
+         *
+         * @param name   Nom du service
+         * @param params Paramètres JSON
+         * @return Vecteur de résultats (un par provider)
+         */
+        std::vector<nlohmann::json> QueryServices(const std::string& name,
+                                                  const nlohmann::json& params);
+
+        /**
          * @brief Log une action dans le log global
          *
          * @param actionType Type d'action (ex: "create_character", "roll_dice")
@@ -261,12 +300,14 @@ namespace Core {
         void SetInstanceID(const std::string& id) { instanceID = id; }
         void SetEventBus(EventBus* bus) { eventBus = bus; }
         void SetLogger(Logger* log) { logger = log; }
+        void SetServiceBus(ServiceBus* bus) { serviceBus = bus; }
 
     protected:
         // Ressources partagées (injectées par ToolRegistry)
         std::string instanceID;                     // UUID unique de cette instance
-        EventBus* eventBus = nullptr;               // Bus d'événements
-        Logger* logger = nullptr;                   // Système de log
+        EventBus*   eventBus   = nullptr;             // Bus d'événements (pub/sub async)
+        Logger*     logger     = nullptr;             // Système de log
+        ServiceBus* serviceBus = nullptr;             // Bus de services (request/response sync)
 
         // État de la fenêtre
         bool isOpen = true;                         // La fenêtre est-elle ouverte?
