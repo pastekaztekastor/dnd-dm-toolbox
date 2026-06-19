@@ -1,0 +1,39 @@
+{
+  "id": "classe_manager",
+  "name": "Gestionnaire de classes DD 5.5",
+  "description": "Gestionnaire des classes de Donjon et Dragon 5.5 du Manuel du joueur",
+  "version": "1.0.0",
+  "author": "D&D DM Toolbox Team",
+
+  "menu": {
+    "category": "Gestionnaire",
+    "order": 10,
+    "shortcuts": []
+  },
+
+  "requires": {
+    "database": false,
+    "event_bus": false,
+    "logger": true
+  },
+
+  "permissions": {
+    "read_database": false,
+    "write_campaign": true,
+    "publish_events": false,
+    "subscribe_events": false
+  },
+
+  "events": {
+    "publishes": [],
+    "subscribes": []
+  },
+
+  "ui": {
+    "window_title": "Gestionnaire de classes DD 5.5",
+    "default_width": 1100,
+    "default_height": 700,
+    "resizable": true,
+    "can_dock": true
+  }
+}

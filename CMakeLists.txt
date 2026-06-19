@@ -36,6 +36,8 @@ set_property(TARGET imgui PROPERTY POSITION_INDEPENDENT_CODE ON)
 set(JSON_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs/json/include)
 
 # nativefiledialog-extended (file dialogs)
+# PIC required because nfd is also linked into shared plugin libraries
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 add_subdirectory(libs/nfd)
 
 # Main executable
@@ -127,3 +129,5 @@ add_plugin(dice_roller)
 add_plugin(log_viewer)
 add_plugin(race_dd_5_5)
 add_plugin(debug_monitor)
+add_plugin(classe_manager)
+target_link_libraries(classe_manager PRIVATE nfd)

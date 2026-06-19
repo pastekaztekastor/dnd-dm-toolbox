@@ -1,6 +1,7 @@
 #include "RaceDd55Tool.h"
 #include "../../include/core/Logger.h"
 #include "../../include/core/EventBus.h"
+#include "../../include/core/utils.h"
 #include "../../include/ui/MarkdownRenderer.h"
 #include <imgui.h>
 #include <nlohmann/json.hpp>
@@ -381,7 +382,8 @@ void RaceDd55Tool::RenderDetailPanel(RaceDd55::RaceData& race) {
         }
         ImGui::SameLine();
     }
-    if (ImGui::Button("Supprimer")) {
+    if (Core::ConfirmDeleteButton("Supprimer", race.id.c_str(), race.nom.c_str(),
+                                   nullptr, false)) {
         Log("race.deleted", { {"_summary", "Suppression : " + race.nom},
                               {"race_id", race.id}, {"race_nom", race.nom} });
         repo->DeleteRaceById(race.id);

@@ -65,3 +65,14 @@ build-output/
 
 # Code/données mis de côté pendant la refonte du moteur (à réintégrer via branches dédiées)
 _setaside/
+src/plugins/classe_manager/seed_barbare.sql
+src/plugins/classe_manager/seed_barde.sql
+src/plugins/classe_manager/seed_clerc.sql
+src/plugins/classe_manager/seed_druide.sql
+src/plugins/classe_manager/seed_ensorceleur.sql
+src/plugins/classe_manager/seed_guerrier.sql
+src/plugins/classe_manager/seed_magicien.sql
+src/plugins/classe_manager/seed_moine.sql
+src/plugins/classe_manager/seed_occultiste.sql
+src/plugins/classe_manager/seed_paladin.sql
+src/plugins/classe_manager/seed_roublard.sql

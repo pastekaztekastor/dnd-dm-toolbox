@@ -162,10 +162,292 @@ Après avoir aussi refont le fonctionnement du bus event je pense qu'il faut aus
 
 Je pense que c'est pas vraiment pas bien découpé mais c'est un découpage fonctionnel. 
 
+### RoadMap
+
+- [ ] Faire la liste des différent niveau/utilisation de log
+- [ ] Réimplémenté la nouvelle utilisation
+- [ ] Surcharge pour quel l'ancienne version co-exsiste
+- [ ] Adapté le plugin de log
+
+## Pseudo Markdown
+
+- [ ] Ajouter le mod formul de math. pas pressnt mais plus simpa pour les formule. 
+
 ## Ajout d'un mode edition/session
 
 Peu être mêttre un mode edition / session pour différencier les logs des deux phase qui sont défférent avec un retour visuel dans la barre de l'app pour toujours savoir dans quelle mode on est. Maybe les deux mode peuvent changer le comportement des plugin genre tu peux pas modifié les race en mode session. 
 
-## Pour le plugin de classe mettre en event
+## Plugin Classes
 
-- getClasseEvolveRequired : qui retourne toute les attribut / compétence d'une classe en fonction des prérqui : niveau min, choix de build, etc. 
+- [ ] Définire le périmètre des différents mode et les fonction
+- [ ] ajouté la features dans le bandeau de l'app
+- [ ] déterminé comment on switche de mode
+- [ ] Maj des ancien plugin pour compatibilité avec (si non pris en charge aucune incidence sur le comprtement)
+
+### RoadMap
+
+#### Plugin
+- [x] Un pannel de consultation, on choisi la classe qu'on consulte et ça affiche tout ce qu'il la concerne 
+- [x] un pannel édition 
+- [x] on peut reprendre la tructure de présentation du gestionnaire de race. 
+- [ ] Voire avec Claude la liste des fonctionne de communication, je pense qu'il y en aura bien plus que pour les races. plus dynamique. 
+  - [ ] getClasseEvolveRequired : qui retourne toute  les attribut / compétence d'une classe en fonction des prérqui : niveau min, choix de build, etc. 
+  - [ ] mettre au point les propocole de communication des classes. 
+- [X] Il y a une erreur quand je charge la seed : Erreur : UNIQUE consteaint failes : classes.nom
+- [x] un bouton modifier pour les sous table de classe (les autre tab)
+- [x] créer les seeds de toutes les autre classes. Commencer par les classes Druide, Paladin Roublard
+  - [X] faire la seed de barde au format sql dans `src/plugin/classe_manager` à partir du markdown dans  : `_setaside/ressources/book/player handbook/03_CLASSES/BARDE/`. Veille à respecter le schéma de data `src/plugins/classe_manager/classe_manager_schema.sql`
+  - [x] faire la seed de clerc au format sql dans `src/plugin/classe_manager` à partir du markdown dans  : `_setaside/ressources/book/player handbook/03_CLASSES/CLERC/`. Veille à respecter le schéma de data `src/plugins/classe_manager/classe_manager_schema.sql`
+  - [x] faire la seed de ensorceleur au format sql dans `src/plugin/classe_manager` à partir du markdown dans  : `_setaside/ressources/book/player handbook/03_CLASSES/ENSORCELEUR/`. Veille à respecter le schéma de data `src/plugins/classe_manager/classe_manager_schema.sql`
+  - [x] faire la seed de guerrier au format sql dans `src/plugin/classe_manager` à partir du markdown dans  : `_setaside/ressources/book/player handbook/03_CLASSES/GUERRIER/`. Veille à respecter le schéma de data `src/plugins/classe_manager/classe_manager_schema.sql`
+  - [x] faire la seed de magicien au format sql dans `src/plugin/classe_manager` à partir du markdown dans  : `_setaside/ressources/book/player handbook/03_CLASSES/MAGICIEN/`. Veille à respecter le schéma de data `src/plugins/classe_manager/classe_manager_schema.sql`
+  - [x] faire la seed de moine au format sql dans `src/plugin/classe_manager` à partir du markdown dans  : `_setaside/ressources/book/player handbook/03_CLASSES/MOINE/`. Veille à respecter le schéma de data `src/plugins/classe_manager/classe_manager_schema.sql`
+  - [x] faire la seed de occultiste au format sql dans `src/plugin/classe_manager` à partir du markdown dans  : `_setaside/ressources/book/player handbook/03_CLASSES/OCCULTISTE/`. Veille à respecter le schéma de data `src/plugins/classe_manager/classe_manager_schema.sql`
+  - [ ] faire la seed de rodeur au format sql dans `src/plugin/classe_manager` à partir du markdown dans  : `_setaside/ressources/book/player handbook/03_CLASSES/RODEUR/`. Veille à respecter le schéma de data `src/plugins/classe_manager/classe_manager_schema.sql`
+
+
+- [X] tab aptitude je pense pas que le layout soit le plus efficace. 
+- [X] tab Evolution , collonne aptitude c'est moche ... il faudrait les noms pas les ids, mettre du retour ligne. 
+- [X] Tab evolution : Pourquoi la ligne LVL 3 est jaune ? C'est parce qu'elle implique un choix ? Sic'est le cas il le faut aussi LVL 14 car choix totémique différent de celui du niveau 3. 
+- [x] Peut être découpé le code par tab pour que ça soit plus lisible ? Dans plusier fichier.
+- [x] Je dois pouvoir modifier TOUTES les aptitude même celle des sous classes
+- [X] Le bouton modifer tout en haut ne devrait pas y être il se contente de modifier la classe donc on inclu les modif / suppression dans le tab Classe comme pour les autre classe. 
+- [X] Supprimer une classe entière se fait depuis le side panel de gauche. 
+- [X] Erreur lors du chargement de la seed druid. Erreur : table classe_evolutions has no column named sort_slot_1 je panse que tu n'a pas respecer strictement le schéma sql
+- [X] à coté de Barbare il y a écrit [barbare] je pense que c'est l'alias. Si c'est pas le cas il faut que ça soit l'alias mais sout la forme [@classe.barbare]. Plus utils pour l'utilisateur.
+- [X] L'affichage des aptitude utilise t'il le pseudo markdown du moteur ? Sinon il faut l'ajouter parce que ça sera obligatoire pour les nombreux tableux de sorts de d'autre classes.
+- [X] Même si ça ne s'affiche pas dans le tab classe il faut que j'ai un récape des choix de build et de leur niveau ainsi que l'apptitude à l'origine et je dois pouvoir paramétré les différent ochoix/réponse dans ce panel d'édition. L'édition des aptitude qura donc dans les prérequi des combots en fonction de ce qui est paramétré dans ce panel la. je pense que cette modification peux justifier une refonte de la DB. Ajouter une table classe_choix_evolution_champs et classe_choix_evolution_valeur. Avec des table de liens entre les différentes table. y compris avec celle des apptitude qui aurais donc comme champs suplémentaire : classe_choix_evolution_champs si c'est une apptitude ou l'on doit faire un choix et classe_choix_evolution_valeur si c'est une apptitude qui dépende d'un choix. ça remplacerait les prerqui en JSON et permeterait une meilleur edition avec des comba plus facile à mettre en place. Par contre ça implique pas mal de fix dans le plugin.
+- [ ] Tout les bouton supr doivent avoir une popup donc on va migrer la popup dans src/core/utils.cpp et on l'implemente partout ou on a un bouton suprimer. Titre de la popup [Confirmation de suppression] le contenue de la popu me vas. 
+
+#### Graphe
+
+MISE EN PAUSE : Je ferai un truc plus propre plus tard avec le système de graphe et le moteur dédié.
+
+- [x] J'aimerais avoir un rendu de type Arbre d'évolution je pense que ma data pérmet de le généré. 
+- [x] Différence d'affichage entre les 3 premier niveau (nom du niveau sur le coté)et les niveau suivant (non du niveau en haut de la tuile) Je préfère l'affichage des niveau suivant. Mais en mettant un encart de trite comme un UML. 
+- [x] Pourquoi le choix du totem spirituel s'affiche en liste et pas comme le choix de voie de la voix primitive ? 
+- [x] J'aimerais des infomartion au survole et au clique. Je penque que la description en survolle et tout eu clique c'est bien (tout s'affiche dans la tuile au clique).
+- [ ] Pour les tuiles du tab Arbre. Les tuiles doivent fix contente. En heuteur et en largeur. Alignement par le centre des tuile d'une meme branche. ligne en courbe de bézier. 
+
+
+### rendu de l'arbre de d'évolution.
+
+Je veux un rendu comme ça : 
+```
+             +-----------------------------+
+LVL 1        | liste des aptitude de lvl 1 |
+             +-------------+---------------+
+                           |
+             +-------------+---------------+
+LVL 2        | liste des aptitude de lvl 2 |
+             +-------------+---------------+
+                           |
+             +-------------+---------------+
+LVL 3        | liste des aptitude de lvl 3 |
+             | Choix                       |
+             +-------------+---------------+
+                           |
+                  +--------+-------+
+                  |                |
+            +-----+------+  +------+-----+  
+            |  A         |  |  B         |
+            +-----+------+  +------+-----+  
+ ...
+```
+
+
+# Gestion des tuiles. 
+
+ Je pense que pour les affichage par tuile en flow on vas faire un moteur de rendu. Plus permissif même si plus ourd à faire. Il sera massivement utilisé dans la partie scénario ultérieurement. Inspiration principal : le no code dans Unreal Engine. Donc chaque tuile à : 
+
+- Un titre
+- Liste d'entrée
+- Liste de sortie
+- Des composante interne. 
+
+ il existe plusieur type de tuile qu'on définira plus tard ensemble. la on se concentre sur le render tuile qui est générique. 
+
+ quelque spécification d'affichage : 
+- Les tuile sont dans un espace infini grillagé. 
+- Les tuiles peuvent être reposistionné dans l'espace. 
+- Elle ne peuvent pas se chevauché. Donc leur taille est fixe 
+- Elle ont des caractéritique affiché de base mais peuvent être dévelopé dans un menu contextuel (exemple : tuile de niveau avec le nom de l'apptitude apprise -> remplie la fenre contextuelle de choix de la tuile.)
+- Les liens entre les tuiles sont des courbe de bézier. 
+- Les entrées sont sur le dessus, les sortie en bas. 
+
+Pour le moment pas d'édition possible c'est uniquement de l'affichage l'édition se fait dans la fenre contextuelle. 
+
+D'un pov dev, une classe abstrait qui explique le rendu. les classe enfant sont propre au plugin. donc dans le plugin Classe il y a une classe tuile_classes qui spécialise la classe tuile.
+
+Je pense que regénéré les arbre dynamiquement à chaque ouverture c'est pas ouf on faire un espace de DB qui enregistre les choses et permet de les retrouver comme elle était plus tard. Juste un fact check à l'ouverture s'il y a des maj data. DE plus les arbres qui sont des ensemble de tuiles sont save dans le .dnd 
+
+donc dans la logique il y aura : 
+- la classe graphe qui gère l'affichage
+- elle comprend des classes abstraite tuiles qui sont spécialisé dans les plugin. 
+
+J'ai penser à : 
+
+- CLASSE GRAPHE
+  - Atribut 
+    - Liste des tuiles
+    - Valeur de zoom
+  - methode 
+    - Auto-replace
+- CLASSE ABSTRAITE TUILE
+  - Atribut 
+    - Nom 
+    - couleur
+    - Dim x, y
+    - position x, y
+    - (liste entrées)
+    - liste sorties [ptr sur tuiles]
+    - label des sorties
+    - bezier des sorties (peut être automatique)
+    - Liste de contenue [table de pseudo md]
+  - Methode 
+    - Render tuile
+    - render detail
+    - Render edition
+- CLASSE TUILE_APTITUDE
+  - Gère mieux l'édition d'une apptitude de classe
+  - surcharge des méthodes
+- CLASSE TUILE_RENCONTRE
+  - integre le résumé d'une rencontre géré par le générateur de rencontre/gestionnaire de rencontre. (nécessite le générateur de rencontre, turn order, gestionnaire de rencontre.)
+  - surcharge des méthodes
+- CLASSE TUILE_HISTOIRE
+  - Boolean pour savoir si branche visité 
+  - surcharge des méthodes
+- CLASSE TUILE_LIEUX
+  - integre une minimap d'un lieux (nécésite la map)
+  - surcharge des méthodes
+
+# Mode scénario
+
+Le mode scénario c'est l'outils de création de campagne donc il doit géré : 
+
+- le lore de l'univers
+- le lors des pj
+  - pj attaché 
+  - liste d'event (date, lieux, description)
+- le lors des pnj 
+  - pnj attaché 
+  - liste d'event (date, lieux, description)
+- une frise chronologique c'est simplement une vue (peut être faire un moteur de rendu pour ça aussi mais pas core c'est spécifique à lui)
+- la gestion de la campagne
+  - les actes 
+    - le but de l'acte
+    - description 
+    - liste des lieux attaché (nécéssite map) - récursif
+    - liste des pnj attaché (nécessite gestionnaire de pnj) - récursif
+    - liste des rencontre attaché (nécessite gestionnaire de rencontre, générateur de rencontre) récursif
+    - les scenes
+      - liste des lieux attaché (nécéssite map) - récursif
+      - liste des pnj attaché (nécessite gestionnaire de pnj) - récursif
+      - liste des rencontre attaché (nécessite gestionnaire de rencontre, générateur de rencontre) récursif
+      - tableau d'exp par accomplissement
+      - un GRAPHE RENDER avec le detaille de la scène 
+    
+J'ai déjà pas mal a faire avec ça. Ici pas de SQL à écrire tout est géré dans le .dnd (qui en est techniquement un mais je le différencie des sql qui ne reprenne que les livres.)
+
+# Gestionnaire de don ....
+
+Ne pas oublier
+
+# DISTINCTION TECHNIQUE 
+
+deux type de fichier loadable
+- `.univ` qui sont des seed de data scrapper des livre. Ont doit pouvoir les loads depuis un SQL ou un CSV et en `.univ` qui est une sorte de sql en brut por gagné de la place. On exporté dans tout les style de lecture. Un fichier .univ peux comporté plusieur table de différent plugin. Il faut donc que le format précise à quelle plugin et quelle version appartient la table pour le chargé. 
+- `.dnd`  qui sont les données du jeu (aventure, fiche de perso, rencontre, map, histoire ...) uniquement chargable et exportable en `.dnd` qui est une sorte de sql en brute pour gagné de la place. On ne sait pas à l'avance ce que vas contenir ce type de fichier. Peut être une simple de fiche de perso ou allors toutes une campagne. Il faut que le format de fichier indique les plugins et leurs version nécessaire à son chargement. s'il ne sont pas tous présent il propose de ne chargé que ce qu'il peux. 
+
+# CORE/MOTEUR 
+
+Est ce qu'il serai utile de mettre dans le manifest quelque chose pour l'auto completion ? peut être même un fichier généré à la volé à louverture de la DB pour le rendre plus fluide. un Json ferai l'affaire. exemple : 
+
+```json
+auto_comletion [
+  race[
+    elfe, nain, ...
+  ],
+  equipement[
+    arme[
+      hache, épée, ...
+    ],
+    armure [
+      maille, cuire
+    ]
+  ]
+]
+```
+
+# Gestionnaire d'historique. 
+
+J'ai pas encore taffé sur le gestionnaire d'historique. Basiquement je pense que un historique c'est de la forme 
+
+Avant de me lancé la dedans il va falloir que je passe en md puis en sql les scannes. 
+
+```sql
+TABLE historique (
+  id TEXT
+  nom TEXT
+  alias TEXT
+  compétence maitrisé 
+  outils maitrisé 
+  langue maitrisé
+  équipement maitrisé 
+)
+TABLE hitorique_ersonalité (
+  id 
+  rang
+  titre 
+  desciption
+  id de l historique
+)
+table hitorique_déal  (
+  id 
+  rang
+  titre 
+  desciption
+  id de l historique
+)
+table hitorique_bligation (
+  id 
+  rang
+  titre 
+  desciption
+  id de l historique
+)
+table hitorique_faille (
+  id 
+  rang
+  titre 
+  desciption
+  id de l historique
+)
+table historique_description (
+  id 
+  titre 
+  estunchoix %s il y a un choix a faire dans ce paragraphe
+  nom de colone choix 1
+  nom de colone choix 2 
+  nom de colone choix 3
+)
+table historique_description_choix(
+  id 
+  id historique
+  valeur 1
+  valeur 2
+  valeur 3
+)
+```
+Il faudra probablement donné ça a Claude pour qu'il me dise ce qu'il en pense et s'il pense qu'il manque des trucs dedans. 
+
+Normalement j'ai rien oublié. 
+La présentation se fera comme les races (relativement simple tout comme les races.)
+l'édition sera comme les races aussi.
+
+# Gestionnaire d'équipement
+
+Dans ma gestion de la fiche de perso je considère que tout ce qui est dans l'inventaire est un équipement. Ainsi les armes, armures, outils, objet,etc sont des équipement. La tables equipement est donc lourde car en fonctiont du type de celui ci elle intège tout un tas de champs pas toujours necessaire. 
+
+Cela dis j'ai déjà fait un MD de ces pages donc plus rapide. 
+
