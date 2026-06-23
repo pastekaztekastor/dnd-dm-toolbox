@@ -76,3 +76,16 @@ src/plugins/classe_manager/seed_moine.sql
 src/plugins/classe_manager/seed_occultiste.sql
 src/plugins/classe_manager/seed_paladin.sql
 src/plugins/classe_manager/seed_roublard.sql
+src/plugins/classe_manager/.old/ClasseManagerRepository.cpp.old
+src/plugins/classe_manager/.old/ClasseManagerRepository.h.old
+src/plugins/classe_manager/.old/ClasseManagerTool_edit_classe.cpp.old
+src/plugins/classe_manager/.old/ClasseManagerTool_edit_subtables.cpp.old
+src/plugins/classe_manager/.old/ClasseManagerTool_lifecycle.cpp.old
+src/plugins/classe_manager/.old/ClasseManagerTool_tab_aptitudes.cpp.old
+src/plugins/classe_manager/.old/ClasseManagerTool_tab_arbre.cpp.old
+src/plugins/classe_manager/.old/ClasseManagerTool_tab_classe.cpp.old
+src/plugins/classe_manager/.old/ClasseManagerTool_tab_equipement.cpp.old
+src/plugins/classe_manager/.old/ClasseManagerTool_tab_evolutions.cpp.old
+src/plugins/classe_manager/.old/ClasseManagerTool.cpp.old
+src/plugins/classe_manager/.old/ClasseManagerTool.h.old
+src/plugins/classe_manager/seed/seed_druide.sql

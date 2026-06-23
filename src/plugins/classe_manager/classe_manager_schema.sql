@@ -3,33 +3,52 @@
 -- ============================================================================
 -- ORDRE D'INSERTION OBLIGATOIRE :
 --   1. classes
---   2. classe_presentations
---   3. classe_evolutions
---   4. classe_choix_champ
---   5. classe_choix_valeur
---   6. classe_aptitudes       (référence choix_champ_id / choix_valeur_id)
---   7. classe_choix_equipement
+--   2. classe_evolution_colonnes
+--   3. classe_presentations
+--   4. classe_evolutions
+--   5. classe_evolution_valeurs (référence classe_evolutions + classe_evolution_colonnes)
+--   6. classe_choix_champ
+--   7. classe_choix_valeur
+--   8. classe_aptitudes       (référence choix_champ_id / choix_valeur_id)
+--   9. classe_choix_equipement
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS classes (
-    id                        TEXT PRIMARY KEY,
-    nom                       TEXT NOT NULL UNIQUE,
-    classe_parente_id         TEXT REFERENCES classes(id),
-    alias                     TEXT,
-    description               TEXT,
-    aide_joueur               TEXT,
-    creation_classe           TEXT,
-    creation_rapide           TEXT,
-    dee_de_vie                INTEGER NOT NULL DEFAULT 6,
-    points_de_vie             INTEGER NOT NULL DEFAULT 6,
-    points_de_vie_par_niveau  INTEGER NOT NULL DEFAULT 4,
-    equipement_maitrise       TEXT DEFAULT '[]',
-    jets_de_sauvegarde        TEXT DEFAULT '[]',
-    competences               TEXT DEFAULT '[]',
-    caracteristiques_de_sorts TEXT,
-    image_path                TEXT DEFAULT 'placeholder.png',
-    source                    TEXT,
-    source_ver                TEXT
+    id                        TEXT PRIMARY KEY,                -- Identification de la classe (ex : barbare, paladin, voleur)
+    nom                       TEXT NOT NULL UNIQUE,            -- Nom de la classe (ex : Barbare, Paladin, Voleur)
+    classe_parente_id         TEXT REFERENCES classes(id),     -- Classe parente si c'est une classe qui dépende d'une autre (ex : barbare_voie_primitive dépend de barbare)
+    alias                     TEXT,                            -- C'est ce qui sert pour le linker MD, généralement le nom de la classe en camelCase (ex : barbare, paladin, voleur)
+    description               TEXT,                            -- Description complette au format MD
+    aide_joueur               TEXT,                            -- Description courte au format MD pour le over mouse
+    creation_classe           TEXT,                            -- Pargraphe pour la création de classe
+    creation_rapide           TEXT,                            -- Paragraphe pour le création rapide de classe
+    dee_de_vie                INTEGER NOT NULL DEFAULT 1,      -- Valeur du dé de vie (1d12 donne 12)
+    points_de_vie_lvl_1       INTEGER NOT NULL DEFAULT 1,      -- Point de vie au niveau 1
+    points_de_vie_par_niveau  INTEGER NOT NULL DEFAULT 1,      -- Point de vie par niveau supplémentaire
+    equipement_maitrise       TEXT DEFAULT '[]',               -- Format JSON : liste des types d'équipement que la classe maîtrise (ex : ["armes_lourdes", "armures_lourdes"])
+    jets_de_sauvegarde        TEXT DEFAULT '[]',               -- Format JSON : liste des jets de sauvegarde que la classe maîtrise (ex : ["force", "constitution"])
+    competences               TEXT DEFAULT '[]',               -- Format JSON : liste des compétences que la classe maîtrise (ex : ["athletisme", "perception"])
+    caracteristiques_de_sorts TEXT,                            -- La caractéristique pour lancer un sort
+    image_path                TEXT DEFAULT 'placeholder.png',  -- Le chemin de l'image de la classe
+    source                    TEXT,                            -- L'origine de la classe (ex : PHB, TCE, etc.)
+    source_ver                TEXT,                            -- La version de l'origine (ex : 5.5.1 pour le PHB 5.5 première version)
+    utilise_magie             BOOLEAN NOT NULL DEFAULT 1       -- Si la classe est une lanceuse de sort ou non pour ne pas affiché les colonne liée au sort dans le tableau d'évolution de classe.
+);
+
+-- ============================================================================
+-- TABLE: classe_evolution_colonnes
+-- ============================================================================
+-- Définition des colonnes du tableau d'évolution d'une classe (nombre illimité,
+-- remplace l'ancien plafond à 5 colonnes figées dans `classes`).
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS classe_evolution_colonnes (
+    id          TEXT PRIMARY KEY,
+    classe_id   TEXT NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+    ordre       INTEGER NOT NULL,
+    titre       TEXT NOT NULL,
+    titre_court TEXT,
+    type        INTEGER NOT NULL DEFAULT 0,  -- 0=texte, 1=nombre
+    UNIQUE(classe_id, ordre)
 );
 
 CREATE TABLE IF NOT EXISTS classe_presentations (
@@ -46,12 +65,6 @@ CREATE TABLE IF NOT EXISTS classe_evolutions (
     niveau            INTEGER NOT NULL,
     bonus_maitrise    INTEGER NOT NULL DEFAULT 2,
     choix_sous_classe INTEGER NOT NULL DEFAULT 0,
-    aptitudes_gagnees TEXT,
-    col_1_titre TEXT, col_1_type INTEGER DEFAULT 0, col_1_nombre INTEGER, col_1_texte TEXT,
-    col_2_titre TEXT, col_2_type INTEGER DEFAULT 0, col_2_nombre INTEGER, col_2_texte TEXT,
-    col_3_titre TEXT, col_3_type INTEGER DEFAULT 0, col_3_nombre INTEGER, col_3_texte TEXT,
-    col_4_titre TEXT, col_4_type INTEGER DEFAULT 0, col_4_nombre INTEGER, col_4_texte TEXT,
-    col_5_titre TEXT, col_5_type INTEGER DEFAULT 0, col_5_nombre INTEGER, col_5_texte TEXT,
     sort_lvl_1 INTEGER NOT NULL DEFAULT 0,
     sort_lvl_2 INTEGER NOT NULL DEFAULT 0,
     sort_lvl_3 INTEGER NOT NULL DEFAULT 0,
@@ -62,6 +75,22 @@ CREATE TABLE IF NOT EXISTS classe_evolutions (
     sort_lvl_8 INTEGER NOT NULL DEFAULT 0,
     sort_lvl_9 INTEGER NOT NULL DEFAULT 0,
     UNIQUE(classe_id, niveau)
+);
+
+-- ============================================================================
+-- TABLE: classe_evolution_valeurs
+-- ============================================================================
+-- Valeur d'une ligne d'évolution pour une colonne dynamique donnée
+-- (cf. classe_evolution_colonnes). Une seule des deux colonnes valeur_*
+-- est renseignée selon le `type` de la colonne (0=texte, 1=nombre).
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS classe_evolution_valeurs (
+    id            TEXT PRIMARY KEY,
+    evolution_id  TEXT NOT NULL REFERENCES classe_evolutions(id) ON DELETE CASCADE,
+    colonne_id    TEXT NOT NULL REFERENCES classe_evolution_colonnes(id) ON DELETE CASCADE,
+    valeur_nombre INTEGER,
+    valeur_texte  TEXT,
+    UNIQUE(evolution_id, colonne_id)
 );
 
 -- ============================================================================
@@ -129,7 +158,8 @@ CREATE TABLE IF NOT EXISTS classe_aptitudes (
     niveau_acquisition       INTEGER NOT NULL DEFAULT 1,
     choix_champ_id           TEXT,   -- TEXT sans FK pour éviter dépendances circulaires
     choix_valeur_id          TEXT,   -- TEXT sans FK (champ peut être d'une autre classe)
-    aptitude_prerequisite_id TEXT    -- auto-référence TEXT sans FK (ordre insert)
+    aptitude_prerequisite_id TEXT,   -- auto-référence TEXT sans FK (ordre insert)
+    version_aptitude         INTEGER NOT NULL DEFAULT 1 -- Si une aptitude évolue on a juste une nouvel version. Exemple : critique brutal 1, critique brutal 2, critique brutal 3. On garde le même id mais on change la version.
 );
 
 CREATE TABLE IF NOT EXISTS classe_choix_equipement (
@@ -137,5 +167,5 @@ CREATE TABLE IF NOT EXISTS classe_choix_equipement (
     classe_id   TEXT NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
     choix_num   INTEGER NOT NULL,
     option_num  INTEGER NOT NULL,
-    description TEXT
+    description TEXT NOT NULL, -- Description de l'option (ex : "Cotte de mailles, Bouclier") Pour affichage. Comme l'alias c'est le nom de l'item en Camel case on peux aisément en faire une liste de liens clicable en MD. 
 );

@@ -84,7 +84,7 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/resources
 function(add_plugin PLUGIN_NAME)
     set(PLUGIN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/plugins/${PLUGIN_NAME})
 
-    file(GLOB PLUGIN_SOURCES ${PLUGIN_DIR}/*.cpp)
+    file(GLOB_RECURSE PLUGIN_SOURCES ${PLUGIN_DIR}/*.cpp)
 
     add_library(${PLUGIN_NAME} SHARED ${PLUGIN_SOURCES})
 
@@ -112,7 +112,7 @@ function(add_plugin PLUGIN_NAME)
     )
 
     # Copier les éventuels schémas/seeds SQL du plugin (chargés à l'exécution)
-    file(GLOB PLUGIN_SQL_FILES ${PLUGIN_DIR}/*.sql)
+    file(GLOB_RECURSE PLUGIN_SQL_FILES ${PLUGIN_DIR}/*.sql)
     foreach(SQL_FILE ${PLUGIN_SQL_FILES})
         get_filename_component(SQL_FILENAME ${SQL_FILE} NAME)
         add_custom_command(TARGET ${PLUGIN_NAME} POST_BUILD
